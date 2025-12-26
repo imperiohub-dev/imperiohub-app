@@ -1,98 +1,216 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { useAuth } from '@/hooks/useAuth';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
-
+/**
+ * 🧪 PANTALLA DE PRUEBA DE LOGIN
+ *
+ * Esta pantalla te permite probar el login con Google.
+ * Para que funcione necesitas:
+ *
+ * 1. Tu backend corriendo en http://localhost:3000
+ * 2. Variables de entorno configuradas en .env
+ * 3. Google OAuth configurado en Google Cloud Console
+ */
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  // Usar el hook de autenticación
+  const { user, isLoading, isAuthenticated, login, logout } = useAuth();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  // Función para hacer login
+  const handleLogin = async () => {
+    console.log('🔐 Intentando hacer login...');
+    const result = await login();
+
+    if (result.success) {
+      Alert.alert('✅ Login exitoso', 'Has iniciado sesión correctamente');
+    } else {
+      Alert.alert('❌ Error', result.error || 'No se pudo iniciar sesión');
+    }
+  };
+
+  // Función para hacer logout
+  const handleLogout = () => {
+    Alert.alert(
+      'Cerrar sesión',
+      '¿Estás seguro?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sí, cerrar',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            Alert.alert('👋 Sesión cerrada');
+          }
+        },
+      ]
+    );
+  };
+
+  // Mostrar spinner mientras carga
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#4285F4" />
+        <Text style={styles.loadingText}>Verificando autenticación...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>🚀 ImperioHub</Text>
+        <Text style={styles.subtitle}>Prueba de Autenticación</Text>
+      </View>
+
+      {/* Content */}
+      <View style={styles.content}>
+        {isAuthenticated && user ? (
+          // Usuario autenticado
+          <>
+            <Text style={styles.statusEmoji}>✅</Text>
+            <Text style={styles.welcomeText}>¡Hola, {user.nombre}!</Text>
+            <Text style={styles.emailText}>{user.email}</Text>
+            <Text style={styles.infoText}>ID: {user.id}</Text>
+
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Text style={styles.buttonText}>Cerrar Sesión</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          // Usuario NO autenticado
+          <>
+            <Text style={styles.statusEmoji}>🔒</Text>
+            <Text style={styles.infoText}>No has iniciado sesión</Text>
+
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+              <Text style={styles.buttonText}>🔐 Iniciar Sesión con Google</Text>
+            </TouchableOpacity>
+
+            <View style={styles.helpBox}>
+              <Text style={styles.helpTitle}>📋 Checklist antes de probar:</Text>
+              <Text style={styles.helpText}>✓ Backend corriendo en localhost:3000</Text>
+              <Text style={styles.helpText}>✓ Archivo .env configurado</Text>
+              <Text style={styles.helpText}>✓ Google OAuth configurado</Text>
+            </View>
+          </>
+        )}
+      </View>
+
+      {/* Footer con info de debugging */}
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          Estado: {isAuthenticated ? '🟢 Autenticado' : '🔴 No autenticado'}
+        </Text>
+        <Text style={styles.footerText}>v1.0.0</Text>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    justifyContent: 'space-between',
   },
-  stepContainer: {
-    gap: 8,
+  header: {
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    paddingBottom: 20,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#333',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
+  statusEmoji: {
+    fontSize: 64,
+    marginBottom: 20,
+  },
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  emailText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 8,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#999',
+    marginBottom: 32,
+  },
+  loginButton: {
+    backgroundColor: '#4285F4',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    minWidth: 280,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  logoutButton: {
+    backgroundColor: '#f44336',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    minWidth: 280,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  helpBox: {
+    backgroundColor: '#f5f5f5',
+    padding: 20,
+    borderRadius: 8,
+    width: '100%',
+    maxWidth: 320,
+  },
+  helpTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 12,
+  },
+  helpText: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 6,
+  },
+  footer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 4,
   },
 });
