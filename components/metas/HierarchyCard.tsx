@@ -36,14 +36,14 @@ interface HierarchyCardProps {
   childrenKey?: string; // 'metas', 'objetivos', 'misiones', 'tareas'
   childrenLabel?: string; // 'Metas', 'Objetivos', etc.
   createButtonLabel?: string; // '+ Nueva Meta', etc.
+  childIcon?: LucideIcon; // Icono para los hijos en preview
+  childIconColor?: string; // Color del icono de los hijos
 
   // Callbacks
   onToggleDone?: (itemId: string, isDone: boolean) => void;
   onCreateChild?: (parentId: string) => void;
   onItemPress?: (item: HierarchyItem) => void;
-
-  // Renderizado recursivo de hijos
-  renderChild?: (child: HierarchyItem) => React.ReactNode;
+  onChildPress?: (child: HierarchyItem) => void; // Navegar al hacer click en hijo
 
   // Comportamiento
   defaultExpanded?: boolean;
@@ -60,10 +60,12 @@ export default function HierarchyCard({
   childrenKey,
   childrenLabel = "Items",
   createButtonLabel = "+ Nuevo",
+  childIcon,
+  childIconColor,
   onToggleDone,
   onCreateChild,
   onItemPress,
-  renderChild,
+  onChildPress,
   defaultExpanded = false,
   level = 0,
   loadingChildren = false,
@@ -119,7 +121,9 @@ export default function HierarchyCard({
           colors={colors}
           loadingChildren={loadingChildren}
           onCreateChild={onCreateChild ? handleCreateChild : undefined}
-          renderChild={renderChild}
+          childIcon={childIcon}
+          childIconColor={childIconColor}
+          onChildPress={onChildPress}
         />
       )}
     </View>

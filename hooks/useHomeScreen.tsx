@@ -6,8 +6,6 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Colors } from "@/constants/theme";
 import { type ItemType } from "@/components/metas/CreateItemModal";
 import { type HierarchyItem } from "@/components/metas/HierarchyCard";
-import HierarchyCard from "@/components/metas/HierarchyCard";
-import { HIERARCHY_CONFIG } from "@/constants/hierarchy";
 import {
   createMeta,
   createObjetivo,
@@ -20,6 +18,8 @@ import {
   updateTarea,
 } from "@/service/api";
 
+type ViewType = "vision" | "meta" | "objetivo" | "mision";
+
 export const useHomeScreen = () => {
   const { userInfo } = useAuth();
   const { visiones, loading, addVision, refreshVisiones } = useVisiones();
@@ -28,6 +28,12 @@ export const useHomeScreen = () => {
 
   // Determinar si tiene visiones
   const hasVisiones = visiones.length > 0;
+
+  // Estado para navegación entre vistas
+  const [currentView, setCurrentView] = useState<ViewType>("vision");
+  const [selectedMeta, setSelectedMeta] = useState<HierarchyItem | null>(null);
+  const [selectedObjetivo, setSelectedObjetivo] = useState<HierarchyItem | null>(null);
+  const [selectedMision, setSelectedMision] = useState<HierarchyItem | null>(null);
 
   // Estado para controlar modales
   const [modalState, setModalState] = useState<{
@@ -39,6 +45,49 @@ export const useHomeScreen = () => {
     type: "vision",
     parentId: null,
   });
+
+  // ============================================
+  // Funciones auxiliares
+  // ============================================
+
+  /**
+   * Actualiza los items seleccionados con la data fresca de visiones
+   * Esto es necesario después de crear/actualizar items para que los hijos se muestren
+   */
+  const updateSelectedItems = () => {
+    // Actualizar meta seleccionada si existe
+    if (selectedMeta) {
+      const updatedMeta = visiones
+        .flatMap((v) => v.metas || [])
+        .find((m) => m.id === selectedMeta.id);
+      if (updatedMeta) {
+        setSelectedMeta(updatedMeta as HierarchyItem);
+      }
+    }
+
+    // Actualizar objetivo seleccionado si existe
+    if (selectedObjetivo) {
+      const updatedObjetivo = visiones
+        .flatMap((v) => v.metas || [])
+        .flatMap((m) => m.objetivos || [])
+        .find((o) => o.id === selectedObjetivo.id);
+      if (updatedObjetivo) {
+        setSelectedObjetivo(updatedObjetivo as HierarchyItem);
+      }
+    }
+
+    // Actualizar misión seleccionada si existe
+    if (selectedMision) {
+      const updatedMision = visiones
+        .flatMap((v) => v.metas || [])
+        .flatMap((m) => m.objetivos || [])
+        .flatMap((o) => o.misiones || [])
+        .find((mi) => mi.id === selectedMision.id);
+      if (updatedMision) {
+        setSelectedMision(updatedMision as HierarchyItem);
+      }
+    }
+  };
 
   // ============================================
   // Funciones de creación genéricas
@@ -85,6 +134,9 @@ export const useHomeScreen = () => {
 
       // Refrescar para obtener datos actualizados
       await refreshVisiones();
+
+      // Actualizar items seleccionados con data fresca
+      updateSelectedItems();
     } catch (error) {
       console.error(`Error al crear ${type}:`, error);
       Alert.alert("Error", `No se pudo crear el ${type}. Intenta nuevamente.`);
@@ -123,6 +175,9 @@ export const useHomeScreen = () => {
 
       // Refrescar para obtener datos actualizados
       await refreshVisiones();
+
+      // Actualizar items seleccionados con data fresca
+      updateSelectedItems();
     } catch (error) {
       console.error(`Error al actualizar ${level}:`, error);
       Alert.alert("Error", `No se pudo actualizar el estado.`);
@@ -130,78 +185,40 @@ export const useHomeScreen = () => {
   };
 
   // ============================================
-  // Funciones de renderizado recursivo
+  // Funciones de navegación
   // ============================================
 
-  const renderTarea = (tarea: HierarchyItem) => {
-    const config = HIERARCHY_CONFIG.tarea;
-    return (
-      <HierarchyCard
-        key={tarea.id}
-        item={tarea}
-        icon={config.icon}
-        iconColor={config.iconColor}
-        onToggleDone={(id, isDone) => handleToggleDone(id, isDone, "tarea")}
-        level={4}
-      />
-    );
+  const handleMetaPress = (meta: HierarchyItem) => {
+    setSelectedMeta(meta);
+    setCurrentView("meta");
   };
 
-  const renderMision = (mision: HierarchyItem) => {
-    const config = HIERARCHY_CONFIG.mision;
-    return (
-      <HierarchyCard
-        key={mision.id}
-        item={mision}
-        icon={config.icon}
-        iconColor={config.iconColor}
-        childrenKey={config.childrenKey}
-        childrenLabel={config.childrenLabel}
-        createButtonLabel={config.createButtonLabel}
-        onToggleDone={(id, isDone) => handleToggleDone(id, isDone, "mision")}
-        onCreateChild={(parentId) => handleCreate("tarea", parentId)}
-        renderChild={renderTarea}
-        level={3}
-      />
-    );
+  const handleObjetivoPress = (objetivo: HierarchyItem) => {
+    setSelectedObjetivo(objetivo);
+    setCurrentView("objetivo");
   };
 
-  const renderObjetivo = (objetivo: HierarchyItem) => {
-    const config = HIERARCHY_CONFIG.objetivo;
-    return (
-      <HierarchyCard
-        key={objetivo.id}
-        item={objetivo}
-        icon={config.icon}
-        iconColor={config.iconColor}
-        childrenKey={config.childrenKey}
-        childrenLabel={config.childrenLabel}
-        createButtonLabel={config.createButtonLabel}
-        onToggleDone={(id, isDone) => handleToggleDone(id, isDone, "objetivo")}
-        onCreateChild={(parentId) => handleCreate("mision", parentId)}
-        renderChild={renderMision}
-        level={2}
-      />
-    );
+  const handleMisionPress = (mision: HierarchyItem) => {
+    setSelectedMision(mision);
+    setCurrentView("mision");
   };
 
-  const renderMeta = (meta: HierarchyItem) => {
-    const config = HIERARCHY_CONFIG.meta;
-    return (
-      <HierarchyCard
-        key={meta.id}
-        item={meta}
-        icon={config.icon}
-        iconColor={config.iconColor}
-        childrenKey={config.childrenKey}
-        childrenLabel={config.childrenLabel}
-        createButtonLabel={config.createButtonLabel}
-        onToggleDone={(id, isDone) => handleToggleDone(id, isDone, "meta")}
-        onCreateChild={(parentId) => handleCreate("objetivo", parentId)}
-        renderChild={renderObjetivo}
-        level={1}
-      />
-    );
+  const handleBackToVisiones = () => {
+    setCurrentView("vision");
+    setSelectedMeta(null);
+    setSelectedObjetivo(null);
+    setSelectedMision(null);
+  };
+
+  const handleBackToMeta = () => {
+    setCurrentView("meta");
+    setSelectedObjetivo(null);
+    setSelectedMision(null);
+  };
+
+  const handleBackToObjetivo = () => {
+    setCurrentView("objetivo");
+    setSelectedMision(null);
   };
 
   return {
@@ -214,6 +231,12 @@ export const useHomeScreen = () => {
     loading,
     hasVisiones,
 
+    // Navigation state
+    currentView,
+    selectedMeta,
+    selectedObjetivo,
+    selectedMision,
+
     // Modal state
     modalState,
 
@@ -223,7 +246,12 @@ export const useHomeScreen = () => {
     handleModalSubmit,
     handleToggleDone,
 
-    // Render functions
-    renderMeta,
+    // Navigation handlers
+    handleMetaPress,
+    handleObjetivoPress,
+    handleMisionPress,
+    handleBackToVisiones,
+    handleBackToMeta,
+    handleBackToObjetivo,
   };
 };

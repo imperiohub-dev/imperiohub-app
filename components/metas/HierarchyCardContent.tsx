@@ -1,6 +1,8 @@
 import React from "react";
 import { View, StyleSheet, Pressable } from "react-native";
 import { ThemedText } from "@/components/themed-text";
+import { type LucideIcon } from "lucide-react-native";
+import { HierarchyPreview } from "./HierarchyPreview";
 import {
   Colors,
   Spacing,
@@ -17,8 +19,10 @@ interface HierarchyCardContentProps {
   childrenItems: HierarchyItem[];
   colors: (typeof Colors)["light"];
   loadingChildren: boolean;
-  onCreateChild?: (parentId: string) => void;
-  renderChild?: (child: HierarchyItem) => React.ReactNode;
+  onCreateChild?: () => void;
+  childIcon?: LucideIcon;
+  childIconColor?: string;
+  onChildPress?: (child: HierarchyItem) => void;
 }
 
 export function HierarchyCardContent({
@@ -28,7 +32,9 @@ export function HierarchyCardContent({
   colors,
   loadingChildren,
   onCreateChild,
-  renderChild,
+  childIcon,
+  childIconColor,
+  onChildPress,
 }: HierarchyCardContentProps) {
   return (
     <View style={styles.expandedContent}>
@@ -72,9 +78,13 @@ export function HierarchyCardContent({
       ) : (
         <View style={styles.childrenList}>
           {childrenItems.map((child) => (
-            <View key={child.id}>
-              {renderChild ? renderChild(child) : null}
-            </View>
+            <HierarchyPreview
+              key={child.id}
+              item={child}
+              icon={childIcon!}
+              iconColor={childIconColor!}
+              onPress={onChildPress || (() => {})}
+            />
           ))}
         </View>
       )}

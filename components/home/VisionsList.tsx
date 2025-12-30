@@ -9,14 +9,13 @@ import {
   BrandColors,
 } from "@/constants/theme";
 import { type HierarchyItem } from "@/components/metas/HierarchyCard";
-import { JSX } from "react";
 
 interface VisionsListProps {
   visiones: HierarchyItem[];
   onCreateVision: () => void;
   onToggleDone: (id: string, isDone: boolean, level: "vision") => void;
   onCreateMeta: (visionId: string) => void;
-  renderMeta: (meta: HierarchyItem) => JSX.Element;
+  onMetaPress: (meta: HierarchyItem) => void;
 }
 
 export default function VisionsList({
@@ -24,8 +23,11 @@ export default function VisionsList({
   onCreateVision,
   onToggleDone,
   onCreateMeta,
-  renderMeta,
+  onMetaPress,
 }: VisionsListProps) {
+  const visionConfig = HIERARCHY_CONFIG.vision;
+  const metaConfig = HIERARCHY_CONFIG.meta;
+
   return (
     <View style={styles.visionesContainer}>
       <View style={styles.visionesHeader}>
@@ -39,24 +41,23 @@ export default function VisionsList({
         </Pressable>
       </View>
 
-      {visiones.map((vision) => {
-        const config = HIERARCHY_CONFIG.vision;
-        return (
-          <HierarchyCard
-            key={vision.id}
-            item={vision}
-            icon={config.icon}
-            iconColor={config.iconColor}
-            childrenKey={config.childrenKey}
-            childrenLabel={config.childrenLabel}
-            createButtonLabel={config.createButtonLabel}
-            onToggleDone={(id, isDone) => onToggleDone(id, isDone, "vision")}
-            onCreateChild={onCreateMeta}
-            renderChild={renderMeta}
-            level={0}
-          />
-        );
-      })}
+      {visiones.map((vision) => (
+        <HierarchyCard
+          key={vision.id}
+          item={vision}
+          icon={visionConfig.icon}
+          iconColor={visionConfig.iconColor}
+          childrenKey={visionConfig.childrenKey}
+          childrenLabel={visionConfig.childrenLabel}
+          createButtonLabel={visionConfig.createButtonLabel}
+          childIcon={metaConfig.icon}
+          childIconColor={metaConfig.iconColor}
+          onToggleDone={(id, isDone) => onToggleDone(id, isDone, "vision")}
+          onCreateChild={onCreateMeta}
+          onChildPress={onMetaPress}
+          level={0}
+        />
+      ))}
     </View>
   );
 }
