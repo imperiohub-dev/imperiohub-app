@@ -19,6 +19,7 @@ export const getVisiones = async (): Promise<Vision[]> => {
   const response = await api.get<ApiListResponse<Vision>>(
     VISION_ENDPOINTS.LIST
   );
+
   return response.data.data;
 };
 
@@ -26,18 +27,14 @@ export const getVisiones = async (): Promise<Vision[]> => {
  * Obtiene una visión por ID
  */
 export const getVisionById = async (id: string): Promise<Vision> => {
-  const response = await api.get<ApiResponse<Vision>>(
-    VISION_ENDPOINTS.GET(id)
-  );
+  const response = await api.get<ApiResponse<Vision>>(VISION_ENDPOINTS.GET(id));
   return response.data.data;
 };
 
 /**
  * Crea una nueva visión
  */
-export const createVision = async (
-  data: CreateVisionDTO
-): Promise<Vision> => {
+export const createVision = async (data: CreateVisionDTO): Promise<Vision> => {
   const response = await api.post<ApiResponse<Vision>>(
     VISION_ENDPOINTS.CREATE,
     data
@@ -48,9 +45,7 @@ export const createVision = async (
 /**
  * Actualiza una visión existente (upsert)
  */
-export const updateVision = async (
-  data: UpdateVisionDTO
-): Promise<Vision> => {
+export const updateVision = async (data: UpdateVisionDTO): Promise<Vision> => {
   const response = await api.post<ApiResponse<Vision>>(
     VISION_ENDPOINTS.UPDATE,
     data

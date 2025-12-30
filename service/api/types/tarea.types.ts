@@ -7,7 +7,7 @@ export interface Tarea {
   id: string;
   titulo: string;
   descripcion: string | null;
-  completada: boolean;
+  isDone: boolean;
   misionId: string;
   createdAt: string;
   updatedAt: string;
@@ -23,5 +23,5 @@ export interface UpdateTareaDTO {
   id: string;
   titulo?: string;
   descripcion?: string;
-  completada?: boolean;
+  isDone?: boolean;
 }

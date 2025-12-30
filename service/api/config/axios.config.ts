@@ -10,11 +10,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { Platform } from "react-native";
 import { tokenStorage } from "../storage/token.storage";
-import {
-  API_BASE_URL,
-  API_TIMEOUT,
-  COMMON_HEADERS,
-} from "./api.constants";
+import { API_BASE_URL, API_TIMEOUT, COMMON_HEADERS } from "./api.constants";
 
 /**
  * Instancia de axios configurada
@@ -62,16 +58,26 @@ api.interceptors.response.use(
   },
   async (error: AxiosError) => {
     // Manejar errores de autenticación
-    if (error.response?.status === 401) {
-      // Token inválido o expirado
-      console.log("Token inválido o expirado, limpiando storage...");
+    switch (error.response?.status) {
+      case 400:
+        console.error("Bad Request - 400", {
+          url: error.config?.url,
+          method: error.config?.method?.toUpperCase(),
+          data: error.config?.data,
+          response: error.response?.data,
+        });
+        break;
+      case 401:
+        // Token inválido o expirado
+        console.log("Token inválido o expirado, limpiando storage...");
 
-      // Limpiar storage
-      await tokenStorage.clear();
+        // Limpiar storage
+        await tokenStorage.clear();
 
-      // TODO: Aquí podrías emitir un evento o usar un estado global
-      // para redirigir al usuario al login
-      // Ejemplo: EventEmitter.emit('auth:logout');
+        // TODO: Aquí podrías emitir un evento o usar un estado global
+        // para redirigir al usuario al login
+        // Ejemplo: EventEmitter.emit('auth:logout');
+        break;
     }
 
     return Promise.reject(error);

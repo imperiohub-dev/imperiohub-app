@@ -16,41 +16,203 @@ import {
 } from "@/constants/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
-import CreateItemModal from "@/components/metas/CreateItemModal";
+import CreateItemModal, { type ItemType } from "@/components/metas/CreateItemModal";
+import HierarchyCard, { type HierarchyItem } from "@/components/metas/HierarchyCard";
+import { HIERARCHY_CONFIG } from "@/constants/hierarchy";
+import {
+  createMeta,
+  createObjetivo,
+  createMision,
+  createTarea,
+  updateVision,
+  updateMeta,
+  updateObjetivo,
+  updateMision,
+  updateTarea,
+} from "@/service/api";
 
 export default function HomeScreen() {
   const { userInfo } = useAuth();
-  const { visiones, loading, addVision } = useVisiones();
+  const { visiones, loading, addVision, refreshVisiones } = useVisiones();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
 
   // Determinar si tiene visiones
   const hasVisiones = visiones.length > 0;
 
-  // Estado para controlar el modal
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  // Estado para controlar modales
+  const [modalState, setModalState] = useState<{
+    visible: boolean;
+    type: ItemType;
+    parentId: string | null;
+  }>({
+    visible: false,
+    type: "vision",
+    parentId: null,
+  });
 
-  const handleCreateVision = () => {
-    setIsModalVisible(true);
+  // ============================================
+  // Funciones de creación genéricas
+  // ============================================
+
+  const handleCreate = (type: ItemType, parentId: string | null = null) => {
+    setModalState({ visible: true, type, parentId });
   };
 
   const handleModalClose = () => {
-    setIsModalVisible(false);
+    setModalState({ visible: false, type: "vision", parentId: null });
   };
 
-  const handleModalSubmit = async (data: {
-    titulo: string;
-    descripcion: string;
-  }) => {
+  const handleModalSubmit = async (data: { titulo: string; descripcion: string }) => {
+    const { type, parentId } = modalState;
+
     try {
-      const nuevaVision = await addVision(data);
-      console.log("Visión creada exitosamente:", nuevaVision);
-      Alert.alert("Éxito", "Tu visión ha sido creada exitosamente");
-      // El estado se actualiza automáticamente gracias al Context
+      let result;
+
+      switch (type) {
+        case "vision":
+          result = await addVision(data);
+          break;
+        case "meta":
+          if (!parentId) throw new Error("Parent ID requerido para Meta");
+          result = await createMeta({ ...data, visionId: parentId });
+          break;
+        case "objetivo":
+          if (!parentId) throw new Error("Parent ID requerido para Objetivo");
+          result = await createObjetivo({ ...data, metaId: parentId });
+          break;
+        case "mision":
+          if (!parentId) throw new Error("Parent ID requerido para Misión");
+          result = await createMision({ ...data, objetivoId: parentId });
+          break;
+        case "tarea":
+          if (!parentId) throw new Error("Parent ID requerido para Tarea");
+          result = await createTarea({ ...data, misionId: parentId });
+          break;
+      }
+
+      console.log(`${type} creado exitosamente:`, result);
+      Alert.alert("Éxito", `Tu ${type} ha sido creado exitosamente`);
+
+      // Refrescar para obtener datos actualizados
+      await refreshVisiones();
     } catch (error) {
-      console.error("Error al crear visión:", error);
-      Alert.alert("Error", "No se pudo crear la visión. Intenta nuevamente.");
+      console.error(`Error al crear ${type}:`, error);
+      Alert.alert("Error", `No se pudo crear el ${type}. Intenta nuevamente.`);
     }
+  };
+
+  // ============================================
+  // Funciones de toggle isDone
+  // ============================================
+
+  const handleToggleDone = async (
+    itemId: string,
+    isDone: boolean,
+    level: "vision" | "meta" | "objetivo" | "mision" | "tarea"
+  ) => {
+    try {
+      switch (level) {
+        case "vision":
+          await updateVision({ id: itemId, isDone });
+          break;
+        case "meta":
+          await updateMeta({ id: itemId, isDone });
+          break;
+        case "objetivo":
+          await updateObjetivo({ id: itemId, isDone });
+          break;
+        case "mision":
+          await updateMision({ id: itemId, isDone });
+          break;
+        case "tarea":
+          await updateTarea({ id: itemId, isDone });
+          break;
+      }
+
+      console.log(`${level} marcado como ${isDone ? "hecho" : "pendiente"}`);
+
+      // Refrescar para obtener datos actualizados
+      await refreshVisiones();
+    } catch (error) {
+      console.error(`Error al actualizar ${level}:`, error);
+      Alert.alert("Error", `No se pudo actualizar el estado.`);
+    }
+  };
+
+  // ============================================
+  // Renderizado recursivo de jerarquía
+  // ============================================
+
+  const renderMeta = (meta: HierarchyItem) => {
+    const config = HIERARCHY_CONFIG.meta;
+    return (
+      <HierarchyCard
+        key={meta.id}
+        item={meta}
+        icon={config.icon}
+        iconColor={config.iconColor}
+        childrenKey={config.childrenKey}
+        childrenLabel={config.childrenLabel}
+        createButtonLabel={config.createButtonLabel}
+        onToggleDone={(id, isDone) => handleToggleDone(id, isDone, "meta")}
+        onCreateChild={(parentId) => handleCreate("objetivo", parentId)}
+        renderChild={renderObjetivo}
+        level={1}
+      />
+    );
+  };
+
+  const renderObjetivo = (objetivo: HierarchyItem) => {
+    const config = HIERARCHY_CONFIG.objetivo;
+    return (
+      <HierarchyCard
+        key={objetivo.id}
+        item={objetivo}
+        icon={config.icon}
+        iconColor={config.iconColor}
+        childrenKey={config.childrenKey}
+        childrenLabel={config.childrenLabel}
+        createButtonLabel={config.createButtonLabel}
+        onToggleDone={(id, isDone) => handleToggleDone(id, isDone, "objetivo")}
+        onCreateChild={(parentId) => handleCreate("mision", parentId)}
+        renderChild={renderMision}
+        level={2}
+      />
+    );
+  };
+
+  const renderMision = (mision: HierarchyItem) => {
+    const config = HIERARCHY_CONFIG.mision;
+    return (
+      <HierarchyCard
+        key={mision.id}
+        item={mision}
+        icon={config.icon}
+        iconColor={config.iconColor}
+        childrenKey={config.childrenKey}
+        childrenLabel={config.childrenLabel}
+        createButtonLabel={config.createButtonLabel}
+        onToggleDone={(id, isDone) => handleToggleDone(id, isDone, "mision")}
+        onCreateChild={(parentId) => handleCreate("tarea", parentId)}
+        renderChild={renderTarea}
+        level={3}
+      />
+    );
+  };
+
+  const renderTarea = (tarea: HierarchyItem) => {
+    const config = HIERARCHY_CONFIG.tarea;
+    return (
+      <HierarchyCard
+        key={tarea.id}
+        item={tarea}
+        icon={config.icon}
+        iconColor={config.iconColor}
+        onToggleDone={(id, isDone) => handleToggleDone(id, isDone, "tarea")}
+        level={4}
+      />
+    );
   };
 
   return (
@@ -128,7 +290,7 @@ export default function HomeScreen() {
                   { backgroundColor: BrandColors.primary },
                   pressed && styles.buttonPressed,
                 ]}
-                onPress={handleCreateVision}
+                onPress={() => handleCreate("vision")}
               >
                 <ThemedText style={styles.buttonText}>
                   Crear mi primera Visión
@@ -137,14 +299,14 @@ export default function HomeScreen() {
             </View>
           )}
 
-          {/* Lista de Visiones */}
+          {/* Lista de Visiones con jerarquía completa */}
           {hasVisiones && (
             <View style={styles.visionesContainer}>
               <View style={styles.visionesHeader}>
                 <ThemedText style={styles.visionesTitle}>
                   Mis Visiones
                 </ThemedText>
-                <Pressable onPress={handleCreateVision}>
+                <Pressable onPress={() => handleCreate("vision")}>
                   <ThemedText
                     style={[styles.addButton, { color: BrandColors.primary }]}
                   >
@@ -153,52 +315,36 @@ export default function HomeScreen() {
                 </Pressable>
               </View>
 
-              {visiones.map((vision) => (
-                <Pressable
-                  key={vision.id}
-                  style={({ pressed }) => [
-                    styles.visionCard,
-                    {
-                      backgroundColor: colors.card,
-                      borderColor: colors.border,
-                    },
-                    pressed && styles.cardPressed,
-                  ]}
-                  onPress={() => console.log("Ver detalles de:", vision.id)}
-                >
-                  <ThemedText style={styles.visionCardTitle}>
-                    {vision.titulo}
-                  </ThemedText>
-                  {vision.descripcion && (
-                    <ThemedText
-                      style={[
-                        styles.visionCardDescription,
-                        { color: colors.textSecondary },
-                      ]}
-                      numberOfLines={2}
-                    >
-                      {vision.descripcion}
-                    </ThemedText>
-                  )}
-                  <ThemedText
-                    style={[styles.visionCardDate, { color: colors.textMuted }]}
-                  >
-                    Creada el{" "}
-                    {new Date(vision.createdAt).toLocaleDateString("es-ES")}
-                  </ThemedText>
-                </Pressable>
-              ))}
+              {/* Renderizado recursivo de toda la jerarquía */}
+              {visiones.map((vision) => {
+                const config = HIERARCHY_CONFIG.vision;
+                return (
+                  <HierarchyCard
+                    key={vision.id}
+                    item={vision}
+                    icon={config.icon}
+                    iconColor={config.iconColor}
+                    childrenKey={config.childrenKey}
+                    childrenLabel={config.childrenLabel}
+                    createButtonLabel={config.createButtonLabel}
+                    onToggleDone={(id, isDone) => handleToggleDone(id, isDone, "vision")}
+                    onCreateChild={(parentId) => handleCreate("meta", parentId)}
+                    renderChild={renderMeta}
+                    level={0}
+                  />
+                );
+              })}
             </View>
           )}
         </ScrollView>
       </ThemedView>
 
-      {/* Modal para crear visión */}
+      {/* Modal universal para crear cualquier item */}
       <CreateItemModal
-        visible={isModalVisible}
+        visible={modalState.visible}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
-        itemType="vision"
+        itemType={modalState.type}
       />
     </SafeAreaView>
   );
@@ -324,35 +470,5 @@ const styles = StyleSheet.create({
   addButton: {
     fontSize: FontSizes.md,
     fontWeight: FontWeights.semibold,
-  },
-
-  // Cards de Visiones
-  visionCard: {
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  cardPressed: {
-    opacity: 0.7,
-    transform: [{ scale: 0.99 }],
-  },
-  visionCardTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.bold,
-    marginBottom: Spacing.xs,
-  },
-  visionCardDescription: {
-    fontSize: FontSizes.sm,
-    marginBottom: Spacing.sm,
-    lineHeight: FontSizes.sm * 1.4,
-  },
-  visionCardDate: {
-    fontSize: FontSizes.xs,
   },
 });
