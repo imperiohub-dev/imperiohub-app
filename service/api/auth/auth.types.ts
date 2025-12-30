@@ -12,8 +12,8 @@ export interface User {
   email: string;
   nombre: string;
   picture: string; // TODO: Backend debe agregar este campo
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  // createdAt: Date | string;
+  // updatedAt: Date | string;
 }
 
 /**

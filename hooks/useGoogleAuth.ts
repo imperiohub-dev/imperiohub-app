@@ -64,16 +64,10 @@ export const useGoogleAuth = () => {
       if (isSuccessResponse(response)) {
         const googleUser = response.data;
 
-        // 3. Obtener el idToken para enviarlo al backend
-        const tokens = await GoogleSignin.getTokens();
+        // 3. Autenticar con nuestro backend
+        const { user } = await authService.loginWithGoogle(googleUser);
 
-        // 4. Autenticar con nuestro backend
-        const { user } = await authService.loginWithGoogle(
-          googleUser,
-          tokens.idToken
-        );
-
-        // 5. Actualizar estado local
+        // 4. Actualizar estado local
         setUserInfo(user);
 
         Alert.alert("Success", `Welcome ${user.nombre}!`);
