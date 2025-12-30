@@ -9,7 +9,7 @@ interface AuthGuardProps {
 
 /**
  * Componente que protege rutas y maneja la navegación basada en autenticación
- * - Si el usuario no está autenticado, redirige a la pantalla de login
+ * - Si el usuario no está autenticado, redirige a /auth
  * - Si está autenticado, muestra el contenido protegido
  * - Muestra un loading mientras verifica el estado de autenticación
  */
@@ -22,17 +22,18 @@ export function AuthGuard({ children }: AuthGuardProps) {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === "(tabs)";
+    const inAuthScreen = segments[0] === "auth";
 
     if (!isAuthenticated && inAuthGroup) {
       // Usuario no autenticado intentando acceder a rutas protegidas
-      // Redirige a la pantalla de login
-      router.replace("/");
-    } else if (isAuthenticated && !inAuthGroup) {
-      // Usuario autenticado en pantalla de login
+      // Redirige a la pantalla de autenticación
+      router.replace("/auth");
+    } else if (isAuthenticated && inAuthScreen) {
+      // Usuario autenticado en pantalla de auth
       // Redirige a la app principal
       router.replace("/(tabs)");
     }
-  }, [isAuthenticated, isLoading, segments]);
+  }, [isAuthenticated, isLoading, segments, router]);
 
   // Mostrar loading mientras se verifica la autenticación
   if (isLoading) {

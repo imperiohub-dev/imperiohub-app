@@ -1,30 +1,30 @@
-import { useEffect } from "react";
-import { GoogleAuthScreen } from "@/components/GoogleAuthScreen";
-import { useGoogleAuth } from "@/hooks/useGoogleAuth";
-import { configureGoogleSignin } from "@/config/google-signin";
+import { View, Text, StyleSheet } from "react-native";
 
 export default function HomeScreen() {
-  useEffect(() => {
-    configureGoogleSignin();
-  }, []);
-
-  const {
-    userInfo,
-    isSigningIn,
-    signIn,
-    signOut,
-    revokeAccess,
-    getCurrentUser,
-  } = useGoogleAuth();
-
   return (
-    <GoogleAuthScreen
-      userInfo={userInfo}
-      isSigningIn={isSigningIn}
-      onSignIn={signIn}
-      onSignOut={signOut}
-      onRevokeAccess={revokeAccess}
-      onGetCurrentUser={getCurrentUser}
-    />
+    <View style={styles.container}>
+      <Text style={styles.text}>Bienvenido! Usuario autenticado.</Text>
+      <Text style={styles.subtext}>
+        Aquí puedes crear tu componente principal
+      </Text>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  text: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  subtext: {
+    fontSize: 16,
+    color: "#666",
+  },
+});

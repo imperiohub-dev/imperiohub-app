@@ -6,13 +6,14 @@ import {
   statusCodes,
 } from "@react-native-google-signin/google-signin";
 import { Alert } from "react-native";
+import { useRouter } from "expo-router";
 import { authService, type User } from "../service/api";
 
 export const useGoogleAuth = () => {
   const [userInfo, setUserInfo] = useState<User | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
+  const router = useRouter();
   useEffect(() => {
     checkIsSignedIn();
   }, []);
