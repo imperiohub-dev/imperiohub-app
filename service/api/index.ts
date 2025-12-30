@@ -15,3 +15,13 @@ export * from "./storage/storage.types";
 // Config
 export * from "./config/axios.config";
 export * from "./config/api.constants";
+
+// Types
+export * from "./types";
+
+// Services - CRUD de Metas
+export * from "./visiones";
+export * from "./metas";
+export * from "./objetivos";
+export * from "./misiones";
+export * from "./tareas";

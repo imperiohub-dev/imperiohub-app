@@ -48,6 +48,61 @@ export const AUTH_ENDPOINTS = {
 } as const;
 
 /**
+ * Endpoints de Visiones
+ */
+export const VISION_ENDPOINTS = {
+  LIST: "/api/visiones",
+  GET: (id: string) => `/api/visiones/${id}`,
+  CREATE: "/api/visiones",
+  UPDATE: "/api/visiones",
+  DELETE: (id: string) => `/api/visiones/${id}`,
+} as const;
+
+/**
+ * Endpoints de Metas
+ */
+export const META_ENDPOINTS = {
+  LIST: "/api/metas",
+  GET: (id: string) => `/api/metas/${id}`,
+  CREATE: "/api/metas",
+  UPDATE: "/api/metas",
+  DELETE: (id: string) => `/api/metas/${id}`,
+} as const;
+
+/**
+ * Endpoints de Objetivos
+ */
+export const OBJETIVO_ENDPOINTS = {
+  LIST: "/api/objetivos",
+  GET: (id: string) => `/api/objetivos/${id}`,
+  CREATE: "/api/objetivos",
+  UPDATE: "/api/objetivos",
+  DELETE: (id: string) => `/api/objetivos/${id}`,
+} as const;
+
+/**
+ * Endpoints de Misiones
+ */
+export const MISION_ENDPOINTS = {
+  LIST: "/api/misiones",
+  GET: (id: string) => `/api/misiones/${id}`,
+  CREATE: "/api/misiones",
+  UPDATE: "/api/misiones",
+  DELETE: (id: string) => `/api/misiones/${id}`,
+} as const;
+
+/**
+ * Endpoints de Tareas
+ */
+export const TAREA_ENDPOINTS = {
+  LIST: "/api/tareas",
+  GET: (id: string) => `/api/tareas/${id}`,
+  CREATE: "/api/tareas",
+  UPDATE: "/api/tareas",
+  DELETE: (id: string) => `/api/tareas/${id}`,
+} as const;
+
+/**
  * Timeouts
  */
 export const API_TIMEOUT = 30000; // 30 segundos

@@ -9,6 +9,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { VisionesProvider } from "@/contexts/VisionesContext";
 import { AuthGuard } from "@/components/AuthGuard";
 
 export const unstable_settings = {
@@ -23,20 +24,23 @@ export default function RootLayout() {
     <AuthProvider>
       {/* Verifica y protege rutas */}
       <AuthGuard>
-        {/* Tu tema existente */}
-        <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-        >
-          {/* Tus pantallas */}
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="modal"
-              options={{ presentation: "modal", title: "Modal" }}
-            />
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
+        {/* Provee el estado de visiones (solo para usuarios autenticados) */}
+        <VisionesProvider>
+          {/* Tu tema existente */}
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          >
+            {/* Tus pantallas */}
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="modal"
+                options={{ presentation: "modal", title: "Modal" }}
+              />
+            </Stack>
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </VisionesProvider>
       </AuthGuard>
     </AuthProvider>
   );
