@@ -52,6 +52,7 @@ export const AUTH_ENDPOINTS = {
  */
 export const VISION_ENDPOINTS = {
   LIST: "/api/visiones",
+  HIERARCHY: "/api/visiones/hierarchy",
   GET: (id: string) => `/api/visiones/${id}`,
   CREATE: "/api/visiones",
   UPDATE: "/api/visiones",

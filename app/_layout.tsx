@@ -10,7 +10,6 @@ import "react-native-reanimated";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { VisionesProvider } from "@/contexts/VisionesContext";
-import { MetasProvider } from "@/contexts/MetasContext";
 import { AuthGuard } from "@/components/AuthGuard";
 
 export const unstable_settings = {
@@ -25,25 +24,22 @@ export default function RootLayout() {
     <AuthProvider>
       {/* Verifica y protege rutas */}
       <AuthGuard>
-        {/* Provee el estado de visiones (solo para usuarios autenticados) */}
+        {/* Provee el estado de visiones con toda la jerarquía (solo para usuarios autenticados) */}
         <VisionesProvider>
-          {/* Provee el estado de metas */}
-          <MetasProvider>
-            {/* Tu tema existente */}
-            <ThemeProvider
-              value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-            >
-              {/* Tus pantallas */}
-              <Stack>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen
-                  name="modal"
-                  options={{ presentation: "modal", title: "Modal" }}
-                />
-              </Stack>
-              <StatusBar style="auto" />
-            </ThemeProvider>
-          </MetasProvider>
+          {/* Tu tema existente */}
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          >
+            {/* Tus pantallas */}
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="modal"
+                options={{ presentation: "modal", title: "Modal" }}
+              />
+            </Stack>
+            <StatusBar style="auto" />
+          </ThemeProvider>
         </VisionesProvider>
       </AuthGuard>
     </AuthProvider>

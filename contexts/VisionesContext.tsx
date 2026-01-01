@@ -6,29 +6,32 @@ import React, {
   ReactNode,
 } from "react";
 import {
-  getVisiones,
+  getVisionesHierarchy,
   createVision,
   updateVision as updateVisionService,
   deleteVision,
-  type Vision,
+  type VisionHierarchy,
   type CreateVisionDTO,
   type UpdateVisionDTO,
+  type PaginationMeta,
 } from "@/service/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface VisionesContextType {
   // Estado
-  visiones: Vision[];
+  visiones: VisionHierarchy[];
   loading: boolean;
   error: string | null;
+  pagination: PaginationMeta | null;
 
   // Acciones CRUD
   fetchVisiones: () => Promise<void>;
-  addVision: (data: CreateVisionDTO) => Promise<Vision>;
-  updateVision: (data: UpdateVisionDTO) => Promise<Vision>;
+  addVision: (data: CreateVisionDTO) => Promise<VisionHierarchy>;
+  updateVision: (data: UpdateVisionDTO) => Promise<VisionHierarchy>;
   removeVision: (id: string) => Promise<void>;
 
   // Helpers
-  getVisionById: (id: string) => Vision | undefined;
+  getVisionById: (id: string) => VisionHierarchy | undefined;
   refreshVisiones: () => Promise<void>;
 }
 
@@ -41,43 +44,62 @@ interface VisionesProviderProps {
 }
 
 export const VisionesProvider = ({ children }: VisionesProviderProps) => {
-  const [visiones, setVisiones] = useState<Vision[]>([]);
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const [visiones, setVisiones] = useState<VisionHierarchy[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
 
-  // Cargar visiones al montar el componente
+  // Cargar visiones solo cuando el usuario esté autenticado
   useEffect(() => {
-    fetchVisiones();
-  }, []);
+    // No intentar cargar si aún está verificando autenticación
+    if (authLoading) {
+      return;
+    }
+
+    // Solo cargar visiones si el usuario está autenticado
+    if (isAuthenticated) {
+      fetchVisiones();
+    } else {
+      // Si no está autenticado, limpiar estado
+      setVisiones([]);
+      setPagination(null);
+      setLoading(false);
+    }
+  }, [isAuthenticated, authLoading]);
 
   /**
-   * Obtiene todas las visiones del backend
+   * Obtiene toda la jerarquía de visiones del backend
+   * Ahora trae Vision → Metas → Objetivos → Misiones → Tareas
    */
   const fetchVisiones = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getVisiones();
-      setVisiones(data);
+      const response = await getVisionesHierarchy();
+      setVisiones(response.visiones);
+      setPagination(response.pagination);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error al cargar visiones";
       setError(errorMessage);
-      console.error("Error fetching visiones:", err);
+      console.error("Error fetching visiones hierarchy:", err);
     } finally {
       setLoading(false);
     }
   };
 
   /**
-   * Crea una nueva visión y actualiza el estado local
+   * Crea una nueva visión y refresca la jerarquía completa
    */
-  const addVision = async (data: CreateVisionDTO): Promise<Vision> => {
+  const addVision = async (data: CreateVisionDTO): Promise<VisionHierarchy> => {
     try {
       const nuevaVision = await createVision(data);
-      // Agregar al inicio de la lista
-      setVisiones((prev) => [nuevaVision, ...prev]);
-      return nuevaVision;
+      // Refrescar toda la jerarquía para obtener la estructura completa
+      await fetchVisiones();
+      // Buscar y retornar la visión recién creada con toda su jerarquía
+      const visionConJerarquia = visiones.find((v) => v.id === nuevaVision.id);
+      return visionConJerarquia || (nuevaVision as VisionHierarchy);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error al crear visión";
@@ -87,15 +109,18 @@ export const VisionesProvider = ({ children }: VisionesProviderProps) => {
   };
 
   /**
-   * Actualiza una visión existente y actualiza el estado local
+   * Actualiza una visión existente y refresca la jerarquía completa
    */
-  const updateVision = async (data: UpdateVisionDTO): Promise<Vision> => {
+  const updateVision = async (data: UpdateVisionDTO): Promise<VisionHierarchy> => {
     try {
-      const visionActualizada = await updateVisionService(data);
-      // Actualizar en el estado local
-      setVisiones((prev) =>
-        prev.map((v) => (v.id === data.id ? visionActualizada : v))
-      );
+      await updateVisionService(data);
+      // Refrescar toda la jerarquía para obtener los cambios
+      await fetchVisiones();
+      // Buscar y retornar la visión actualizada
+      const visionActualizada = visiones.find((v) => v.id === data.id);
+      if (!visionActualizada) {
+        throw new Error("Visión no encontrada después de actualizar");
+      }
       return visionActualizada;
     } catch (err) {
       const errorMessage =
@@ -124,12 +149,12 @@ export const VisionesProvider = ({ children }: VisionesProviderProps) => {
   /**
    * Obtiene una visión por ID desde el estado local
    */
-  const getVisionById = (id: string): Vision | undefined => {
+  const getVisionById = (id: string): VisionHierarchy | undefined => {
     return visiones.find((v) => v.id === id);
   };
 
   /**
-   * Refresca la lista de visiones (alias de fetchVisiones)
+   * Refresca la lista de visiones con toda su jerarquía
    */
   const refreshVisiones = async () => {
     await fetchVisiones();
@@ -139,6 +164,7 @@ export const VisionesProvider = ({ children }: VisionesProviderProps) => {
     visiones,
     loading,
     error,
+    pagination,
     fetchVisiones,
     addVision,
     updateVision,

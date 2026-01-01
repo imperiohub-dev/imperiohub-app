@@ -68,15 +68,19 @@ api.interceptors.response.use(
         });
         break;
       case 401:
-        // Token inválido o expirado
-        console.log("Token inválido o expirado, limpiando storage...");
+      case 403:
+        // Token inválido, expirado o sin permisos
+        const errorData = error.response?.data as any;
+        console.warn(`${error.response?.status === 401 ? 'Unauthorized' : 'Forbidden'} - ${error.response?.status}`, {
+          url: error.config?.url,
+          error: errorData?.error || errorData?.message,
+        });
 
-        // Limpiar storage
+        // Limpiar storage de tokens
         await tokenStorage.clear();
 
-        // TODO: Aquí podrías emitir un evento o usar un estado global
-        // para redirigir al usuario al login
-        // Ejemplo: EventEmitter.emit('auth:logout');
+        // El AuthContext manejará la redirección al login
+        // cuando detecte que no hay token
         break;
     }
 

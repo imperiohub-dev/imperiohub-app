@@ -60,6 +60,7 @@ export const useHomeScreen = () => {
       const updatedMeta = visiones
         .flatMap((v) => v.metas || [])
         .find((m) => m.id === selectedMeta.id);
+
       if (updatedMeta) {
         setSelectedMeta(updatedMeta as HierarchyItem);
       }
@@ -71,6 +72,7 @@ export const useHomeScreen = () => {
         .flatMap((v) => v.metas || [])
         .flatMap((m) => m.objetivos || [])
         .find((o) => o.id === selectedObjetivo.id);
+
       if (updatedObjetivo) {
         setSelectedObjetivo(updatedObjetivo as HierarchyItem);
       }
@@ -83,6 +85,7 @@ export const useHomeScreen = () => {
         .flatMap((m) => m.objetivos || [])
         .flatMap((o) => o.misiones || [])
         .find((mi) => mi.id === selectedMision.id);
+
       if (updatedMision) {
         setSelectedMision(updatedMision as HierarchyItem);
       }

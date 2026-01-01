@@ -4,6 +4,9 @@
  */
 
 import type { Meta } from "./meta.types";
+import type { Objetivo } from "./objetivo.types";
+import type { Mision } from "./mision.types";
+import type { Tarea } from "./tarea.types";
 
 export interface Vision {
   id: string;
@@ -27,4 +30,50 @@ export interface UpdateVisionDTO {
   titulo?: string;
   descripcion?: string;
   isDone?: boolean;
+}
+
+// ============================================
+// Tipos de Jerarquía Completa (desde el backend)
+// ============================================
+
+export interface VisionWithRelations extends Vision {
+  metas: Meta[];
+}
+
+// Jerarquía completa: Tarea (nivel final)
+export interface TareaHierarchy extends Tarea {}
+
+// Jerarquía completa: Mision con Tareas
+export interface MisionHierarchy extends Mision {
+  tareas: TareaHierarchy[];
+}
+
+// Jerarquía completa: Objetivo con Misiones
+export interface ObjetivoHierarchy extends Objetivo {
+  misiones: MisionHierarchy[];
+}
+
+// Jerarquía completa: Meta con Objetivos
+export interface MetaHierarchy extends Meta {
+  objetivos: ObjetivoHierarchy[];
+}
+
+// Jerarquía completa: Vision con toda su descendencia
+export interface VisionHierarchy extends Vision {
+  metas: MetaHierarchy[];
+}
+
+// Paginación
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
+// Respuesta de jerarquía con paginación
+export interface FindHierarchyResponse {
+  visiones: VisionHierarchy[];
+  pagination: PaginationMeta;
 }
