@@ -32,41 +32,48 @@ interface CreateItemModalProps {
   onClose: () => void;
   onSubmit: (data: { titulo: string; descripcion: string }) => void;
   itemType: ItemType;
+  initialData?: { titulo: string; descripcion: string };
 }
 
 // Configuración para cada tipo de item
 const ITEM_CONFIG: Record<
   ItemType,
   {
-    title: string;
+    createTitle: string;
+    editTitle: string;
     titlePlaceholder: string;
     descriptionPlaceholder: string;
   }
 > = {
   vision: {
-    title: "Crear nueva Visión",
+    createTitle: "Crear nueva Visión",
+    editTitle: "Editar Visión",
     titlePlaceholder: "Ej: Convertirme en desarrollador senior",
     descriptionPlaceholder: "Describe tu visión a largo plazo...",
   },
   meta: {
-    title: "Crear nueva Meta",
+    createTitle: "Crear nueva Meta",
+    editTitle: "Editar Meta",
     titlePlaceholder: "Ej: Dominar React Native",
     descriptionPlaceholder: "Describe qué quieres lograr con esta meta...",
   },
   objetivo: {
-    title: "Crear nuevo Objetivo",
+    createTitle: "Crear nuevo Objetivo",
+    editTitle: "Editar Objetivo",
     titlePlaceholder: "Ej: Completar 3 proyectos en React Native",
     descriptionPlaceholder:
       "Describe qué pasos necesitas para alcanzar este objetivo...",
   },
   mision: {
-    title: "Crear nueva Misión",
+    createTitle: "Crear nueva Misión",
+    editTitle: "Editar Misión",
     titlePlaceholder: "Ej: Estudiar hooks avanzados",
     descriptionPlaceholder:
       "Describe las actividades específicas de esta misión...",
   },
   tarea: {
-    title: "Crear nueva Tarea",
+    createTitle: "Crear nueva Tarea",
+    editTitle: "Editar Tarea",
     titlePlaceholder: "Ej: Leer documentación de useEffect",
     descriptionPlaceholder: "Describe lo que necesitas hacer...",
   },
@@ -77,14 +84,26 @@ export default function CreateItemModal({
   onClose,
   onSubmit,
   itemType,
+  initialData,
 }: CreateItemModalProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const config = ITEM_CONFIG[itemType];
 
-  const [titulo, setTitulo] = useState("");
-  const [descripcion, setDescripcion] = useState("");
+  const [titulo, setTitulo] = useState(initialData?.titulo || "");
+  const [descripcion, setDescripcion] = useState(initialData?.descripcion || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Actualizar el estado cuando cambia initialData
+  React.useEffect(() => {
+    if (initialData) {
+      setTitulo(initialData.titulo);
+      setDescripcion(initialData.descripcion || "");
+    } else {
+      setTitulo("");
+      setDescripcion("");
+    }
+  }, [initialData, visible]);
 
   const handleSubmit = async () => {
     // Validación básica
@@ -137,7 +156,9 @@ export default function CreateItemModal({
         >
           {/* Header */}
           <View style={styles.modalHeader}>
-            <ThemedText style={styles.modalTitle}>{config.title}</ThemedText>
+            <ThemedText style={styles.modalTitle}>
+              {initialData ? config.editTitle : config.createTitle}
+            </ThemedText>
             <Pressable onPress={handleCancel} style={styles.closeButton}>
               <X size={IconSizes.md} color={colors.icon} />
             </Pressable>
@@ -238,7 +259,13 @@ export default function CreateItemModal({
               disabled={isSubmitting}
             >
               <ThemedText style={styles.submitButtonText}>
-                {isSubmitting ? "Creando..." : `Crear ${itemType}`}
+                {isSubmitting
+                  ? initialData
+                    ? "Guardando..."
+                    : "Creando..."
+                  : initialData
+                  ? "Guardar cambios"
+                  : `Crear ${itemType}`}
               </ThemedText>
             </Pressable>
           </View>

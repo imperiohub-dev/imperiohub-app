@@ -17,7 +17,7 @@ import {
 } from "@/service/api";
 import { useAuth } from "@/contexts/AuthContext";
 
-interface VisionesContextType {
+export interface VisionesContextType {
   // Estado
   visiones: VisionHierarchy[];
   loading: boolean;
@@ -111,7 +111,9 @@ export const VisionesProvider = ({ children }: VisionesProviderProps) => {
   /**
    * Actualiza una visión existente y refresca la jerarquía completa
    */
-  const updateVision = async (data: UpdateVisionDTO): Promise<VisionHierarchy> => {
+  const updateVision = async (
+    data: UpdateVisionDTO
+  ): Promise<VisionHierarchy> => {
     try {
       await updateVisionService(data);
       // Refrescar toda la jerarquía para obtener los cambios

@@ -3,34 +3,21 @@
  * Basado en el modelo Vision de Prisma
  */
 
+import type { BaseEntity, BaseCreateDTO, BaseUpdateDTO } from "./base.types";
 import type { Meta } from "./meta.types";
 import type { Objetivo } from "./objetivo.types";
 import type { Mision } from "./mision.types";
 import type { Tarea } from "./tarea.types";
 
-export interface Vision {
-  id: string;
-  titulo: string;
-  descripcion: string | null;
-  isDone: boolean;
+export interface Vision extends BaseEntity {
   usuarioId: string;
-  createdAt: string;
-  updatedAt: string;
   // Relaciones opcionales (cuando se incluyen desde el backend)
   metas?: Meta[];
 }
 
-export interface CreateVisionDTO {
-  titulo: string;
-  descripcion?: string;
-}
+export interface CreateVisionDTO extends BaseCreateDTO {}
 
-export interface UpdateVisionDTO {
-  id: string;
-  titulo?: string;
-  descripcion?: string;
-  isDone?: boolean;
-}
+export interface UpdateVisionDTO extends BaseUpdateDTO {}
 
 // ============================================
 // Tipos de Jerarquía Completa (desde el backend)

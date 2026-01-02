@@ -1,7 +1,7 @@
 import { StyleSheet, ScrollView } from "react-native";
 import { ThemedView } from "@/components/themed-view";
 import { SafeAreaView } from "react-native-safe-area-context";
-import CreateItemModal from "@/components/metas/CreateItemModal";
+import CreateItemModal from "@/components/CampamentoView/CreateItemModal";
 import { useHomeScreen } from "@/hooks/useHomeScreen";
 import HeaderProfile from "@/components/home/HeaderProfile";
 import EmptyStateView from "@/components/home/EmptyStateView";

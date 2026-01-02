@@ -3,29 +3,17 @@
  * Basado en el modelo Meta de Prisma
  */
 
+import type { BaseEntity, BaseCreateDTO, BaseUpdateDTO } from "./base.types";
 import type { Objetivo } from "./objetivo.types";
 
-export interface Meta {
-  id: string;
-  titulo: string;
-  descripcion: string | null;
-  isDone: boolean;
+export interface Meta extends BaseEntity {
   visionId: string;
-  createdAt: string;
-  updatedAt: string;
   // Relaciones opcionales
   objetivos?: Objetivo[];
 }
 
-export interface CreateMetaDTO {
-  titulo: string;
-  descripcion?: string;
+export interface CreateMetaDTO extends BaseCreateDTO {
   visionId: string;
 }
 
-export interface UpdateMetaDTO {
-  id: string;
-  titulo?: string;
-  descripcion?: string;
-  isDone?: boolean;
-}
+export interface UpdateMetaDTO extends BaseUpdateDTO {}

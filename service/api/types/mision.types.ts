@@ -3,29 +3,17 @@
  * Basado en el modelo Mision de Prisma
  */
 
+import type { BaseEntity, BaseCreateDTO, BaseUpdateDTO } from "./base.types";
 import type { Tarea } from "./tarea.types";
 
-export interface Mision {
-  id: string;
-  titulo: string;
-  descripcion: string | null;
-  isDone: boolean;
+export interface Mision extends BaseEntity {
   objetivoId: string;
-  createdAt: string;
-  updatedAt: string;
   // Relaciones opcionales
   tareas?: Tarea[];
 }
 
-export interface CreateMisionDTO {
-  titulo: string;
-  descripcion?: string;
+export interface CreateMisionDTO extends BaseCreateDTO {
   objetivoId: string;
 }
 
-export interface UpdateMisionDTO {
-  id: string;
-  titulo?: string;
-  descripcion?: string;
-  isDone?: boolean;
-}
+export interface UpdateMisionDTO extends BaseUpdateDTO {}

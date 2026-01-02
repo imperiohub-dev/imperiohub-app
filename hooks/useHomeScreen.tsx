@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useVisiones } from "@/contexts/VisionesContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Colors } from "@/constants/theme";
-import { type ItemType } from "@/components/metas/CreateItemModal";
+import { type ItemType } from "@/components/CampamentoView/CreateItemModal";
 import { type HierarchyItem } from "@/components/metas/HierarchyCard";
 import {
   createMeta,
@@ -32,8 +32,11 @@ export const useHomeScreen = () => {
   // Estado para navegación entre vistas
   const [currentView, setCurrentView] = useState<ViewType>("vision");
   const [selectedMeta, setSelectedMeta] = useState<HierarchyItem | null>(null);
-  const [selectedObjetivo, setSelectedObjetivo] = useState<HierarchyItem | null>(null);
-  const [selectedMision, setSelectedMision] = useState<HierarchyItem | null>(null);
+  const [selectedObjetivo, setSelectedObjetivo] =
+    useState<HierarchyItem | null>(null);
+  const [selectedMision, setSelectedMision] = useState<HierarchyItem | null>(
+    null
+  );
 
   // Estado para controlar modales
   const [modalState, setModalState] = useState<{
@@ -104,7 +107,10 @@ export const useHomeScreen = () => {
     setModalState({ visible: false, type: "vision", parentId: null });
   };
 
-  const handleModalSubmit = async (data: { titulo: string; descripcion: string }) => {
+  const handleModalSubmit = async (data: {
+    titulo: string;
+    descripcion: string;
+  }) => {
     const { type, parentId } = modalState;
 
     try {
