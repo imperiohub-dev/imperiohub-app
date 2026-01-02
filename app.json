@@ -21,7 +21,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.rcygm.imperiohubapp"
+      "package": "com.rcygm.imperiohubapp",
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "output": "static",

@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import type { CampamentoCardType } from "./useCampamentoView";
 import CreateItemModal from "@/components/CampamentoView/CreateItemModal";
 import { useCampamentoCRUD } from "./useCampamentoCRUD";
@@ -71,23 +71,38 @@ export default function CardActions({ currentCard, onRefresh }: CardActionsProps
     );
   };
 
-  const handleSubmit = async (data: {
-    titulo: string;
-    descripcion: string;
-  }) => {
-    try {
-      if (modalMode === "create") {
-        // Crear hijo usando el hook
-        await createItem(currentCard, data);
-      } else {
-        // Editar la tarjeta actual usando el hook
-        await updateItem(currentCard, data);
+  const handleSubmit = useCallback(
+    async (data: { titulo: string; descripcion: string }) => {
+      try {
+        if (modalMode === "create") {
+          // Crear hijo usando el hook
+          await createItem(currentCard, data);
+        } else {
+          // Editar la tarjeta actual usando el hook
+          await updateItem(currentCard, data);
+        }
+      } catch (error) {
+        console.error("Error en handleSubmit:", error);
+        throw error;
       }
-    } catch (error) {
-      console.error("Error en handleSubmit:", error);
-      throw error;
-    }
-  };
+    },
+    [modalMode, createItem, updateItem, currentCard]
+  );
+
+  const handleCloseModal = useCallback(() => {
+    setModalVisible(false);
+  }, []);
+
+  const initialData = useMemo(
+    () =>
+      modalMode === "edit"
+        ? {
+            titulo: currentCard.titulo,
+            descripcion: currentCard.descripcion || "",
+          }
+        : undefined,
+    [modalMode, currentCard.titulo, currentCard.descripcion]
+  );
 
   const buttons = [
     {
@@ -127,17 +142,10 @@ export default function CardActions({ currentCard, onRefresh }: CardActionsProps
 
       <CreateItemModal
         visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        onClose={handleCloseModal}
         onSubmit={handleSubmit}
         itemType={modalMode === "create" ? childType : currentType}
-        initialData={
-          modalMode === "edit"
-            ? {
-                titulo: currentCard.titulo,
-                descripcion: currentCard.descripcion || "",
-              }
-            : undefined
-        }
+        initialData={initialData}
       />
     </>
   );

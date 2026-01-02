@@ -25,6 +25,7 @@ import {
   type UpdateMisionDTO,
   type CreateTareaDTO,
   type UpdateTareaDTO,
+  type VisionHierarchy,
 } from "@/service/api";
 import type { CampamentoCardType } from "./useCampamentoView";
 import type { Vision } from "@/service/api/types/vision.types";

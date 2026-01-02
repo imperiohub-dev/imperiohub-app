@@ -102,6 +102,89 @@ export default function useCampamentoView() {
     setNavigationStack([]);
   };
 
+  // Sincronizar el navigationStack cuando se actualizan las visiones
+  useEffect(() => {
+    if (navigationStack.length > 0 && visiones.length > 0) {
+      const updatedStack: CampamentoCardType[] = [];
+
+      for (const card of navigationStack) {
+        let foundCard: CampamentoCardType | null = null;
+
+        // Buscar en visiones
+        for (const vision of visiones) {
+          if (vision.id === card.id) {
+            foundCard = vision as CampamentoCardType;
+            break;
+          }
+
+          // Buscar en metas
+          if (vision.metas) {
+            for (const meta of vision.metas) {
+              if (meta.id === card.id) {
+                foundCard = meta as CampamentoCardType;
+                break;
+              }
+
+              // Buscar en objetivos
+              if (meta.objetivos) {
+                for (const objetivo of meta.objetivos) {
+                  if (objetivo.id === card.id) {
+                    foundCard = objetivo as CampamentoCardType;
+                    break;
+                  }
+
+                  // Buscar en misiones
+                  if (objetivo.misiones) {
+                    for (const mision of objetivo.misiones) {
+                      if (mision.id === card.id) {
+                        foundCard = mision as CampamentoCardType;
+                        break;
+                      }
+
+                      // Buscar en tareas
+                      if (mision.tareas) {
+                        for (const tarea of mision.tareas) {
+                          if (tarea.id === card.id) {
+                            foundCard = tarea as CampamentoCardType;
+                            break;
+                          }
+                        }
+                      }
+                    }
+                  }
+                  if (foundCard) break;
+                }
+              }
+              if (foundCard) break;
+            }
+          }
+          if (foundCard) break;
+        }
+
+        if (foundCard) {
+          updatedStack.push(foundCard);
+        }
+      }
+
+      // Solo actualizar si encontramos todas las tarjetas y hay cambios reales en los datos
+      if (updatedStack.length === navigationStack.length) {
+        // Comparar si hay cambios reales en titulo o descripcion
+        const hasChanges = updatedStack.some((updatedCard, index) => {
+          const currentCard = navigationStack[index];
+          return (
+            updatedCard.titulo !== currentCard.titulo ||
+            updatedCard.descripcion !== currentCard.descripcion
+          );
+        });
+
+        if (hasChanges) {
+          setNavigationStack(updatedStack);
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visiones]);
+
   // Actualizar currentChildren cuando cambia el stack
   useEffect(() => {
     const children = getChildren(currentCard);

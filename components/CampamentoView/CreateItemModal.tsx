@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Modal,
   View,
@@ -79,7 +79,7 @@ const ITEM_CONFIG: Record<
   },
 };
 
-export default function CreateItemModal({
+function CreateItemModal({
   visible,
   onClose,
   onSubmit,
@@ -90,20 +90,36 @@ export default function CreateItemModal({
   const colors = Colors[colorScheme ?? "light"];
   const config = ITEM_CONFIG[itemType];
 
-  const [titulo, setTitulo] = useState(initialData?.titulo || "");
-  const [descripcion, setDescripcion] = useState(initialData?.descripcion || "");
+  const [titulo, setTitulo] = useState("");
+  const [descripcion, setDescripcion] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Actualizar el estado cuando cambia initialData
-  React.useEffect(() => {
-    if (initialData) {
-      setTitulo(initialData.titulo);
-      setDescripcion(initialData.descripcion || "");
-    } else {
-      setTitulo("");
-      setDescripcion("");
+  // Ref para trackear si ya inicializamos y los valores iniciales
+  const initializedRef = useRef(false);
+  const lastInitialDataRef = useRef<{ titulo: string; descripcion: string } | null>(null);
+
+  // Actualizar el estado solo cuando el modal se abre por primera vez
+  useEffect(() => {
+    if (visible && !initializedRef.current) {
+      if (initialData) {
+        setTitulo(initialData.titulo);
+        setDescripcion(initialData.descripcion || "");
+        lastInitialDataRef.current = {
+          titulo: initialData.titulo,
+          descripcion: initialData.descripcion || "",
+        };
+      } else {
+        setTitulo("");
+        setDescripcion("");
+        lastInitialDataRef.current = null;
+      }
+      initializedRef.current = true;
+    } else if (!visible) {
+      // Reset cuando se cierra el modal
+      initializedRef.current = false;
+      lastInitialDataRef.current = null;
     }
-  }, [initialData, visible]);
+  }, [visible]);
 
   const handleSubmit = async () => {
     // Validación básica
@@ -141,10 +157,12 @@ export default function CreateItemModal({
       animationType="slide"
       transparent={true}
       onRequestClose={onClose}
+      statusBarTranslucent
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.modalOverlay}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
         <Pressable style={styles.backdrop} onPress={handleCancel} />
 
@@ -168,6 +186,8 @@ export default function CreateItemModal({
           <ScrollView
             style={styles.formContainer}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
           >
             {/* Título */}
             <View style={styles.inputGroup}>
@@ -397,3 +417,26 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 });
+
+export default React.memo(
+  CreateItemModal,
+  (prevProps, nextProps) => {
+    // Comparación personalizada para evitar re-renders innecesarios
+    if (prevProps.visible !== nextProps.visible) return false;
+    if (prevProps.itemType !== nextProps.itemType) return false;
+    if (prevProps.onClose !== nextProps.onClose) return false;
+    if (prevProps.onSubmit !== nextProps.onSubmit) return false;
+
+    // Comparar initialData por valores, no por referencia
+    const prevData = prevProps.initialData;
+    const nextData = nextProps.initialData;
+
+    if (!prevData && !nextData) return true;
+    if (!prevData || !nextData) return false;
+
+    return (
+      prevData.titulo === nextData.titulo &&
+      prevData.descripcion === nextData.descripcion
+    );
+  }
+);
