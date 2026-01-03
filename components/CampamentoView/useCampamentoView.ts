@@ -1,7 +1,16 @@
 import { useEffect, useState, useCallback } from "react";
-import { getOrganizacionesHierarchy, type OrganizacionHierarchy } from "@/service/api";
+import {
+  getOrganizacionesHierarchy,
+  type OrganizacionHierarchy,
+} from "@/service/api";
 import type { Organizacion } from "@/service/api/types/organizacion.types";
-import type { Vision, VisionHierarchy } from "@/service/api/types/vision.types";
+import type {
+  Vision,
+  VisionHierarchy,
+  MetaHierarchy,
+  ObjetivoHierarchy,
+  MisionHierarchy,
+} from "@/service/api/types/vision.types";
 import type { Meta } from "@/service/api/types/meta.types";
 import type { Objetivo } from "@/service/api/types/objetivo.types";
 import type { Mision } from "@/service/api/types/mision.types";
@@ -28,26 +37,54 @@ export interface RootNode {
   isDone: boolean;
 }
 
-export type CampamentoCardType = RootNode | Organizacion | Vision | Meta | Objetivo | Mision | Tarea;
+export type CampamentoCardType =
+  | RootNode
+  | Organizacion
+  | Vision
+  | Meta
+  | Objetivo
+  | Mision
+  | Tarea;
 
 // Función para crear el nodo raíz virtual
 const createRootNode = (): RootNode => ({
   id: "root-user",
   type: "root",
   titulo: "Mis Organizaciones",
-  descripcion: "Aquí puedes gestionar todas tus organizaciones, visiones y objetivos",
+  descripcion:
+    "Aquí puedes gestionar todas tus organizaciones, visiones y objetivos",
   createdAt: new Date(),
   updatedAt: new Date(),
   isDone: false,
 });
 
+// Type guards para verificar tipos de jerarquía
+const isOrganizacionHierarchy = (card: CampamentoCardType): card is OrganizacionHierarchy =>
+  "visiones" in card;
+
+const isVisionHierarchy = (card: CampamentoCardType): card is VisionHierarchy =>
+  "metas" in card && !("visiones" in card);
+
+const isMetaHierarchy = (card: CampamentoCardType): card is MetaHierarchy =>
+  "visionId" in card && "objetivos" in card;
+
+const isObjetivoHierarchy = (card: CampamentoCardType): card is ObjetivoHierarchy =>
+  "metaId" in card && "misiones" in card;
+
+const isMisionHierarchy = (card: CampamentoCardType): card is MisionHierarchy =>
+  "objetivoId" in card && "tareas" in card;
+
 export default function useCampamentoView() {
-  const [organizaciones, setOrganizaciones] = useState<OrganizacionHierarchy[]>([]);
+  const [organizaciones, setOrganizaciones] = useState<OrganizacionHierarchy[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Stack de navegación: array de tarjetas visitadas
-  const [navigationStack, setNavigationStack] = useState<CampamentoCardType[]>([]);
+  const [navigationStack, setNavigationStack] = useState<CampamentoCardType[]>(
+    []
+  );
 
   // Función para cargar/refrescar organizaciones
   const fetchOrganizaciones = useCallback(async () => {
@@ -72,9 +109,10 @@ export default function useCampamentoView() {
   }, [fetchOrganizaciones]);
 
   // La tarjeta actual es la última en el stack, o el nodo raíz si está vacío
-  const currentCard = navigationStack.length > 0
-    ? navigationStack[navigationStack.length - 1]
-    : createRootNode();
+  const currentCard =
+    navigationStack.length > 0
+      ? navigationStack[navigationStack.length - 1]
+      : createRootNode();
 
   const [currentChildren, setCurrentChildren] = useState<CampamentoCardType[]>(
     []
@@ -85,12 +123,11 @@ export default function useCampamentoView() {
     (card: CampamentoCardType): CampamentoCardType[] => {
       // Si es el nodo raíz, los hijos son las organizaciones
       if ("type" in card && card.type === "root") return organizaciones;
-
-      if ("visiones" in card) return card.visiones || [];
-      if ("metas" in card) return card.metas || [];
-      if ("visionId" in card && "objetivos" in card) return card.objetivos || [];
-      if ("metaId" in card && "misiones" in card) return card.misiones || [];
-      if ("objetivoId" in card && "tareas" in card) return card.tareas || [];
+      if (isOrganizacionHierarchy(card)) return card.visiones || [];
+      if (isVisionHierarchy(card)) return card.metas || [];
+      if (isMetaHierarchy(card)) return card.objetivos || [];
+      if (isObjetivoHierarchy(card)) return card.misiones || [];
+      if (isMisionHierarchy(card)) return card.tareas || [];
       if ("misionId" in card) return [];
 
       return [];
@@ -212,26 +249,28 @@ export default function useCampamentoView() {
           const currentCard = navigationStack[index];
 
           // Verificar cambios en propiedades básicas
-          if (updatedCard.titulo !== currentCard.titulo ||
-              updatedCard.descripcion !== currentCard.descripcion) {
+          if (
+            updatedCard.titulo !== currentCard.titulo ||
+            updatedCard.descripcion !== currentCard.descripcion
+          ) {
             return true;
           }
 
           // Verificar cambios en los arrays de hijos (por longitud)
-          if ("visiones" in updatedCard && "visiones" in currentCard) {
-            return (updatedCard.visiones?.length || 0) !== (currentCard.visiones?.length || 0);
+          if (isOrganizacionHierarchy(updatedCard) && isOrganizacionHierarchy(currentCard)) {
+            return updatedCard.visiones.length !== currentCard.visiones.length;
           }
-          if ("metas" in updatedCard && "metas" in currentCard) {
-            return (updatedCard.metas?.length || 0) !== (currentCard.metas?.length || 0);
+          if (isVisionHierarchy(updatedCard) && isVisionHierarchy(currentCard)) {
+            return updatedCard.metas.length !== currentCard.metas.length;
           }
-          if ("objetivos" in updatedCard && "objetivos" in currentCard) {
-            return (updatedCard.objetivos?.length || 0) !== (currentCard.objetivos?.length || 0);
+          if (isMetaHierarchy(updatedCard) && isMetaHierarchy(currentCard)) {
+            return updatedCard.objetivos.length !== currentCard.objetivos.length;
           }
-          if ("misiones" in updatedCard && "misiones" in currentCard) {
-            return (updatedCard.misiones?.length || 0) !== (currentCard.misiones?.length || 0);
+          if (isObjetivoHierarchy(updatedCard) && isObjetivoHierarchy(currentCard)) {
+            return updatedCard.misiones.length !== currentCard.misiones.length;
           }
-          if ("tareas" in updatedCard && "tareas" in currentCard) {
-            return (updatedCard.tareas?.length || 0) !== (currentCard.tareas?.length || 0);
+          if (isMisionHierarchy(updatedCard) && isMisionHierarchy(currentCard)) {
+            return updatedCard.tareas.length !== currentCard.tareas.length;
           }
 
           return false;
@@ -285,21 +324,25 @@ export default function useCampamentoView() {
 
                       // Actualizar en misiones
                       if (objetivo.misiones) {
-                        const updatedMisiones = objetivo.misiones.map((mision) => {
-                          if (mision.id === itemId) {
-                            return { ...mision, ...updates };
-                          }
+                        const updatedMisiones = objetivo.misiones.map(
+                          (mision) => {
+                            if (mision.id === itemId) {
+                              return { ...mision, ...updates };
+                            }
 
-                          // Actualizar en tareas
-                          if (mision.tareas) {
-                            const updatedTareas = mision.tareas.map((tarea) =>
-                              tarea.id === itemId ? { ...tarea, ...updates } : tarea
-                            );
-                            return { ...mision, tareas: updatedTareas };
-                          }
+                            // Actualizar en tareas
+                            if (mision.tareas) {
+                              const updatedTareas = mision.tareas.map((tarea) =>
+                                tarea.id === itemId
+                                  ? { ...tarea, ...updates }
+                                  : tarea
+                              );
+                              return { ...mision, tareas: updatedTareas };
+                            }
 
-                          return mision;
-                        });
+                            return mision;
+                          }
+                        );
                         return { ...objetivo, misiones: updatedMisiones };
                       }
 
@@ -357,7 +400,10 @@ export default function useCampamentoView() {
                                   }
                                   return mision;
                                 });
-                              return { ...objetivo, misiones: filteredMisiones };
+                              return {
+                                ...objetivo,
+                                misiones: filteredMisiones,
+                              };
                             }
                             return objetivo;
                           });
@@ -415,7 +461,10 @@ export default function useCampamentoView() {
                   ...vision,
                   metas: [
                     ...(vision.metas || []),
-                    { ...newMeta, objetivos: [] } as import("@/service/api/types/vision.types").MetaHierarchy,
+                    {
+                      ...newMeta,
+                      objetivos: [],
+                    } as import("@/service/api/types/vision.types").MetaHierarchy,
                   ],
                 };
               }
@@ -423,53 +472,61 @@ export default function useCampamentoView() {
               // Agregar en metas
               if (vision.metas) {
                 const updatedMetas = vision.metas.map((meta) => {
-              // Agregar objetivo a meta
-              if (meta.id === parentId) {
-                const newObjetivo = newItem as Objetivo;
-                return {
-                  ...meta,
-                  objetivos: [
-                    ...(meta.objetivos || []),
-                    { ...newObjetivo, misiones: [] } as import("@/service/api/types/vision.types").ObjetivoHierarchy,
-                  ],
-                };
-              }
-
-              // Agregar en objetivos
-              if (meta.objetivos) {
-                const updatedObjetivos = meta.objetivos.map((objetivo) => {
-                  // Agregar misión a objetivo
-                  if (objetivo.id === parentId) {
-                    const newMision = newItem as Mision;
+                  // Agregar objetivo a meta
+                  if (meta.id === parentId) {
+                    const newObjetivo = newItem as Objetivo;
                     return {
-                      ...objetivo,
-                      misiones: [
-                        ...(objetivo.misiones || []),
-                        { ...newMision, tareas: [] } as import("@/service/api/types/vision.types").MisionHierarchy,
+                      ...meta,
+                      objetivos: [
+                        ...(meta.objetivos || []),
+                        {
+                          ...newObjetivo,
+                          misiones: [],
+                        } as import("@/service/api/types/vision.types").ObjetivoHierarchy,
                       ],
                     };
                   }
 
-                  // Agregar en misiones
-                  if (objetivo.misiones) {
-                    const updatedMisiones = objetivo.misiones.map((mision) => {
-                      // Agregar tarea a misión
-                      if (mision.id === parentId) {
-                        const newTarea = newItem as Tarea;
+                  // Agregar en objetivos
+                  if (meta.objetivos) {
+                    const updatedObjetivos = meta.objetivos.map((objetivo) => {
+                      // Agregar misión a objetivo
+                      if (objetivo.id === parentId) {
+                        const newMision = newItem as Mision;
                         return {
-                          ...mision,
-                          tareas: [...(mision.tareas || []), newTarea],
+                          ...objetivo,
+                          misiones: [
+                            ...(objetivo.misiones || []),
+                            {
+                              ...newMision,
+                              tareas: [],
+                            } as import("@/service/api/types/vision.types").MisionHierarchy,
+                          ],
                         };
                       }
-                      return mision;
-                    });
-                    return { ...objetivo, misiones: updatedMisiones };
-                  }
 
-                  return objetivo;
-                });
-                return { ...meta, objetivos: updatedObjetivos };
-              }
+                      // Agregar en misiones
+                      if (objetivo.misiones) {
+                        const updatedMisiones = objetivo.misiones.map(
+                          (mision) => {
+                            // Agregar tarea a misión
+                            if (mision.id === parentId) {
+                              const newTarea = newItem as Tarea;
+                              return {
+                                ...mision,
+                                tareas: [...(mision.tareas || []), newTarea],
+                              };
+                            }
+                            return mision;
+                          }
+                        );
+                        return { ...objetivo, misiones: updatedMisiones };
+                      }
+
+                      return objetivo;
+                    });
+                    return { ...meta, objetivos: updatedObjetivos };
+                  }
 
                   return meta;
                 });
