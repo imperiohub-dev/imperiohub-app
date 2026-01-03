@@ -20,7 +20,7 @@ interface RenderCardsProps {
 
 const renderCards = ({ cards, onCardPress }: RenderCardsProps) => {
   if (cards.length === 0) {
-    return <Text>No hay elementos para mostrar.</Text>;
+    return null; // <Text>No hay elementos para mostrar.</Text>;
   }
 
   return (
@@ -42,9 +42,12 @@ export default function CampamentoView({
     navigateForward,
     navigateBack,
     navigateToIndex,
-    fetchVisiones,
+    fetchOrganizaciones,
     loading,
     error,
+    updateItemInHierarchy,
+    deleteItemFromHierarchy,
+    addItemToHierarchy,
   } = useCampamentoView();
 
   const showBackButton = navigationStack.length > 0;
@@ -63,12 +66,16 @@ export default function CampamentoView({
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorText}>Error: {error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchVisiones}>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={fetchOrganizaciones}
+        >
           <Text style={styles.retryButtonText}>Reintentar</Text>
         </TouchableOpacity>
       </View>
     );
   }
+  //  console.log("currentCard", currentCard);
 
   return (
     <>
@@ -85,13 +92,16 @@ export default function CampamentoView({
         </TouchableOpacity>
       )}
 
-      {/* Mostrar tarjeta actual si existe */}
-      {currentCard && (
-        <>
-          <CurrentCardDisplay currentCard={currentCard} />
-          <CardActions currentCard={currentCard} onRefresh={fetchVisiones} />
-        </>
-      )}
+      {/* Mostrar tarjeta actual (siempre existe gracias al nodo raíz virtual) */}
+      <CurrentCardDisplay currentCard={currentCard} />
+      <CardActions
+        currentCard={currentCard}
+        onRefresh={fetchOrganizaciones}
+        updateItemInHierarchy={updateItemInHierarchy}
+        deleteItemFromHierarchy={deleteItemFromHierarchy}
+        addItemToHierarchy={addItemToHierarchy}
+        navigateBack={navigateBack}
+      />
 
       {/* Tarjetas del nivel actual */}
       {renderCards({ cards: currentChildren, onCardPress: navigateForward })}

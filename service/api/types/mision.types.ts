@@ -16,4 +16,6 @@ export interface CreateMisionDTO extends BaseCreateDTO {
   objetivoId: string;
 }
 
-export interface UpdateMisionDTO extends BaseUpdateDTO {}
+export interface UpdateMisionDTO extends BaseUpdateDTO {
+  objetivoId?: string; // Opcional para no romper código existente
+}

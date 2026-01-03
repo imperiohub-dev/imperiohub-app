@@ -17,3 +17,12 @@ export interface ApiError {
   code?: string;
   details?: unknown;
 }
+
+// Paginación (compartido entre organizaciones y visiones)
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+}

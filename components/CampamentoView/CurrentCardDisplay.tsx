@@ -9,6 +9,9 @@ interface CurrentCardDisplayProps {
 export default function CurrentCardDisplay({
   currentCard,
 }: CurrentCardDisplayProps) {
+  // Si es el nodo raíz, mostrar una vista especial
+  const isRootNode = "type" in currentCard && currentCard.type === "root";
+
   return (
     <View style={styles.container}>
       {/* Título */}
@@ -19,7 +22,8 @@ export default function CurrentCardDisplay({
         <Text style={styles.description}>{currentCard.descripcion}</Text>
       )}
 
-      {/* Metadatos */}
+      {/* Metadatos solo si NO es el nodo raíz */}
+      {!isRootNode && (
       <View style={styles.metadataContainer}>
         {/* ID */}
         <View style={styles.metadataRow}>
@@ -70,6 +74,13 @@ export default function CurrentCardDisplay({
           </View>
         )}
 
+        {"organizacionId" in currentCard && currentCard.organizacionId && (
+          <View style={styles.metadataRow}>
+            <Text style={styles.metadataLabel}>Organización ID:</Text>
+            <Text style={styles.metadataValue}>{currentCard.organizacionId}</Text>
+          </View>
+        )}
+
         {"visionId" in currentCard && (
           <View style={styles.metadataRow}>
             <Text style={styles.metadataLabel}>Visión ID:</Text>
@@ -98,6 +109,7 @@ export default function CurrentCardDisplay({
           </View>
         )}
       </View>
+      )}
     </View>
   );
 }

@@ -19,7 +19,8 @@ export * from "./config/api.constants";
 // Types
 export * from "./types";
 
-// Services - CRUD de Metas
+// Services - CRUD de Entidades
+export * from "./organizaciones";
 export * from "./visiones";
 export * from "./metas";
 export * from "./objetivos";

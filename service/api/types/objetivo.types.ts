@@ -16,4 +16,6 @@ export interface CreateObjetivoDTO extends BaseCreateDTO {
   metaId: string;
 }
 
-export interface UpdateObjetivoDTO extends BaseUpdateDTO {}
+export interface UpdateObjetivoDTO extends BaseUpdateDTO {
+  metaId?: string; // Opcional para no romper código existente
+}

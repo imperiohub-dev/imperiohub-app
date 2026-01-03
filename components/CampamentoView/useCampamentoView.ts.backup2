@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { getOrganizacionesHierarchy, type OrganizacionHierarchy } from "@/service/api";
 import type { Organizacion } from "@/service/api/types/organizacion.types";
-import type { Vision, VisionHierarchy } from "@/service/api/types/vision.types";
+import type { Vision } from "@/service/api/types/vision.types";
 import type { Meta } from "@/service/api/types/meta.types";
 import type { Objetivo } from "@/service/api/types/objetivo.types";
 import type { Mision } from "@/service/api/types/mision.types";
@@ -218,9 +218,6 @@ export default function useCampamentoView() {
           }
 
           // Verificar cambios en los arrays de hijos (por longitud)
-          if ("visiones" in updatedCard && "visiones" in currentCard) {
-            return (updatedCard.visiones?.length || 0) !== (currentCard.visiones?.length || 0);
-          }
           if ("metas" in updatedCard && "metas" in currentCard) {
             return (updatedCard.metas?.length || 0) !== (currentCard.metas?.length || 0);
           }
@@ -255,70 +252,57 @@ export default function useCampamentoView() {
   const updateItemInHierarchy = useCallback(
     (itemId: string, updates: { titulo: string; descripcion: string }) => {
       setOrganizaciones((prevOrganizaciones) => {
-        return prevOrganizaciones.map((organizacion) => {
-          // Actualizar organización
-          if (organizacion.id === itemId) {
-            return { ...organizacion, ...updates };
+        return prevOrganizaciones.map((vision) => {
+          // Actualizar visión
+          if (vision.id === itemId) {
+            return { ...vision, ...updates };
           }
 
-          // Actualizar en visiones
-          if (organizacion.visiones) {
-            const updatedVisiones = organizacion.visiones.map((vision) => {
-              // Actualizar visión
-              if (vision.id === itemId) {
-                return { ...vision, ...updates };
+          // Actualizar en metas
+          if (vision.metas) {
+            const updatedMetas = vision.metas.map((meta) => {
+              if (meta.id === itemId) {
+                return { ...meta, ...updates };
               }
 
-              // Actualizar en metas
-              if (vision.metas) {
-                const updatedMetas = vision.metas.map((meta) => {
-                  if (meta.id === itemId) {
-                    return { ...meta, ...updates };
+              // Actualizar en objetivos
+              if (meta.objetivos) {
+                const updatedObjetivos = meta.objetivos.map((objetivo) => {
+                  if (objetivo.id === itemId) {
+                    return { ...objetivo, ...updates };
                   }
 
-                  // Actualizar en objetivos
-                  if (meta.objetivos) {
-                    const updatedObjetivos = meta.objetivos.map((objetivo) => {
-                      if (objetivo.id === itemId) {
-                        return { ...objetivo, ...updates };
+                  // Actualizar en misiones
+                  if (objetivo.misiones) {
+                    const updatedMisiones = objetivo.misiones.map((mision) => {
+                      if (mision.id === itemId) {
+                        return { ...mision, ...updates };
                       }
 
-                      // Actualizar en misiones
-                      if (objetivo.misiones) {
-                        const updatedMisiones = objetivo.misiones.map((mision) => {
-                          if (mision.id === itemId) {
-                            return { ...mision, ...updates };
-                          }
-
-                          // Actualizar en tareas
-                          if (mision.tareas) {
-                            const updatedTareas = mision.tareas.map((tarea) =>
-                              tarea.id === itemId ? { ...tarea, ...updates } : tarea
-                            );
-                            return { ...mision, tareas: updatedTareas };
-                          }
-
-                          return mision;
-                        });
-                        return { ...objetivo, misiones: updatedMisiones };
+                      // Actualizar en tareas
+                      if (mision.tareas) {
+                        const updatedTareas = mision.tareas.map((tarea) =>
+                          tarea.id === itemId ? { ...tarea, ...updates } : tarea
+                        );
+                        return { ...mision, tareas: updatedTareas };
                       }
 
-                      return objetivo;
+                      return mision;
                     });
-                    return { ...meta, objetivos: updatedObjetivos };
+                    return { ...objetivo, misiones: updatedMisiones };
                   }
 
-                  return meta;
+                  return objetivo;
                 });
-                return { ...vision, metas: updatedMetas };
+                return { ...meta, objetivos: updatedObjetivos };
               }
 
-              return vision;
+              return meta;
             });
-            return { ...organizacion, visiones: updatedVisiones };
+            return { ...vision, metas: updatedMetas };
           }
 
-          return organizacion;
+          return vision;
         });
       });
     },
@@ -329,49 +313,41 @@ export default function useCampamentoView() {
   const deleteItemFromHierarchy = useCallback((itemId: string) => {
     setOrganizaciones((prevOrganizaciones) => {
       return prevOrganizaciones
-        .filter((organizacion) => organizacion.id !== itemId)
-        .map((organizacion) => {
-          if (organizacion.visiones) {
-            const filteredVisiones = organizacion.visiones
-              .filter((vision) => vision.id !== itemId)
-              .map((vision) => {
-                if (vision.metas) {
-                  const filteredMetas = vision.metas
-                    .filter((meta) => meta.id !== itemId)
-                    .map((meta) => {
-                      if (meta.objetivos) {
-                        const filteredObjetivos = meta.objetivos
-                          .filter((objetivo) => objetivo.id !== itemId)
-                          .map((objetivo) => {
-                            if (objetivo.misiones) {
-                              const filteredMisiones = objetivo.misiones
-                                .filter((mision) => mision.id !== itemId)
-                                .map((mision) => {
-                                  if (mision.tareas) {
-                                    return {
-                                      ...mision,
-                                      tareas: mision.tareas.filter(
-                                        (tarea) => tarea.id !== itemId
-                                      ),
-                                    };
-                                  }
-                                  return mision;
-                                });
-                              return { ...objetivo, misiones: filteredMisiones };
+        .filter((vision) => vision.id !== itemId)
+        .map((vision) => {
+          if (vision.metas) {
+            const filteredMetas = vision.metas
+              .filter((meta) => meta.id !== itemId)
+              .map((meta) => {
+                if (meta.objetivos) {
+                  const filteredObjetivos = meta.objetivos
+                    .filter((objetivo) => objetivo.id !== itemId)
+                    .map((objetivo) => {
+                      if (objetivo.misiones) {
+                        const filteredMisiones = objetivo.misiones
+                          .filter((mision) => mision.id !== itemId)
+                          .map((mision) => {
+                            if (mision.tareas) {
+                              return {
+                                ...mision,
+                                tareas: mision.tareas.filter(
+                                  (tarea) => tarea.id !== itemId
+                                ),
+                              };
                             }
-                            return objetivo;
+                            return mision;
                           });
-                        return { ...meta, objetivos: filteredObjetivos };
+                        return { ...objetivo, misiones: filteredMisiones };
                       }
-                      return meta;
+                      return objetivo;
                     });
-                  return { ...vision, metas: filteredMetas };
+                  return { ...meta, objetivos: filteredObjetivos };
                 }
-                return vision;
+                return meta;
               });
-            return { ...organizacion, visiones: filteredVisiones };
+            return { ...vision, metas: filteredMetas };
           }
-          return organizacion;
+          return vision;
         });
     });
   }, []);
@@ -380,49 +356,34 @@ export default function useCampamentoView() {
   const addItemToHierarchy = useCallback(
     (
       parentId: string | null,
-      newItem: Organizacion | Vision | Meta | Objetivo | Mision | Tarea
+      newItem: Vision | Meta | Objetivo | Mision | Tarea
     ) => {
       setOrganizaciones((prevOrganizaciones) => {
-        // Si no hay parentId, es una nueva organización
+        // Si no hay parentId, es una nueva visión
         if (!parentId) {
-          const newOrganizacion = newItem as Organizacion;
+          const newVision = newItem as Vision;
           return [
             ...prevOrganizaciones,
-            { ...newOrganizacion, visiones: [] } as OrganizacionHierarchy,
+            { ...newVision, metas: [] } as VisionHierarchy,
           ];
         }
 
-        return prevOrganizaciones.map((organizacion) => {
-          // Agregar visión a organización
-          if (organizacion.id === parentId) {
-            const newVision = newItem as Vision;
+        return prevOrganizaciones.map((vision) => {
+          // Agregar meta a visión
+          if (vision.id === parentId) {
+            const newMeta = newItem as Meta;
             return {
-              ...organizacion,
-              visiones: [
-                ...(organizacion.visiones || []),
-                { ...newVision, metas: [] } as VisionHierarchy,
+              ...vision,
+              metas: [
+                ...(vision.metas || []),
+                { ...newMeta, objetivos: [] } as import("@/service/api/types/vision.types").MetaHierarchy,
               ],
             };
           }
 
-          // Agregar en visiones
-          if (organizacion.visiones) {
-            const updatedVisiones = organizacion.visiones.map((vision) => {
-              // Agregar meta a visión
-              if (vision.id === parentId) {
-                const newMeta = newItem as Meta;
-                return {
-                  ...vision,
-                  metas: [
-                    ...(vision.metas || []),
-                    { ...newMeta, objetivos: [] } as import("@/service/api/types/vision.types").MetaHierarchy,
-                  ],
-                };
-              }
-
-              // Agregar en metas
-              if (vision.metas) {
-                const updatedMetas = vision.metas.map((meta) => {
+          // Agregar en metas
+          if (vision.metas) {
+            const updatedMetas = vision.metas.map((meta) => {
               // Agregar objetivo a meta
               if (meta.id === parentId) {
                 const newObjetivo = newItem as Objetivo;
@@ -471,17 +432,12 @@ export default function useCampamentoView() {
                 return { ...meta, objetivos: updatedObjetivos };
               }
 
-                  return meta;
-                });
-                return { ...vision, metas: updatedMetas };
-              }
-
-              return vision;
+              return meta;
             });
-            return { ...organizacion, visiones: updatedVisiones };
+            return { ...vision, metas: updatedMetas };
           }
 
-          return organizacion;
+          return vision;
         });
       });
     },

@@ -25,7 +25,7 @@ import {
 } from "@/constants/theme";
 
 // Tipos de items que se pueden crear
-export type ItemType = "vision" | "meta" | "objetivo" | "mision" | "tarea";
+export type ItemType = "organizacion" | "vision" | "meta" | "objetivo" | "mision" | "tarea";
 
 interface CreateItemModalProps {
   visible: boolean;
@@ -45,6 +45,12 @@ const ITEM_CONFIG: Record<
     descriptionPlaceholder: string;
   }
 > = {
+  organizacion: {
+    createTitle: "Crear nueva Organización",
+    editTitle: "Editar Organización",
+    titlePlaceholder: "Ej: Mi Empresa",
+    descriptionPlaceholder: "Describe tu organización...",
+  },
   vision: {
     createTitle: "Crear nueva Visión",
     editTitle: "Editar Visión",

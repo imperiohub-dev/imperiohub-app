@@ -1,5 +1,8 @@
 import { useState } from "react";
 import {
+  createOrganizacion,
+  updateOrganizacion,
+  deleteOrganizacion,
   createVision,
   updateVision as updateVisionService,
   deleteVision,
@@ -15,6 +18,8 @@ import {
   createTarea,
   updateTarea,
   deleteTarea,
+  type CreateOrganizacionDTO,
+  type UpdateOrganizacionDTO,
   type CreateVisionDTO,
   type UpdateVisionDTO,
   type CreateMetaDTO,
@@ -25,22 +30,36 @@ import {
   type UpdateMisionDTO,
   type CreateTareaDTO,
   type UpdateTareaDTO,
-  type VisionHierarchy,
 } from "@/service/api";
 import type { CampamentoCardType } from "./useCampamentoView";
+import type { Organizacion } from "@/service/api/types/organizacion.types";
 import type { Vision } from "@/service/api/types/vision.types";
 import type { Meta } from "@/service/api/types/meta.types";
 import type { Objetivo } from "@/service/api/types/objetivo.types";
 import type { Mision } from "@/service/api/types/mision.types";
 import type { Tarea } from "@/service/api/types/tarea.types";
 
-export type ItemType = "vision" | "meta" | "objetivo" | "mision" | "tarea";
+export type ItemType = "root" | "organizacion" | "vision" | "meta" | "objetivo" | "mision" | "tarea";
 
 interface UseCampamentoCRUDProps {
   onRefresh: () => Promise<void>;
+  updateItemInHierarchy: (
+    itemId: string,
+    updates: { titulo: string; descripcion: string }
+  ) => void;
+  deleteItemFromHierarchy: (itemId: string) => void;
+  addItemToHierarchy: (
+    parentId: string | null,
+    newItem: Organizacion | Vision | Meta | Objetivo | Mision | Tarea
+  ) => void;
 }
 
-export function useCampamentoCRUD({ onRefresh }: UseCampamentoCRUDProps) {
+export function useCampamentoCRUD({
+  onRefresh,
+  updateItemInHierarchy,
+  deleteItemFromHierarchy,
+  addItemToHierarchy,
+}: UseCampamentoCRUDProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,6 +67,8 @@ export function useCampamentoCRUD({ onRefresh }: UseCampamentoCRUDProps) {
    * Determina el tipo de elemento basado en la estructura de la tarjeta
    */
   const getCardType = (card: CampamentoCardType): ItemType => {
+    if ("type" in card && card.type === "root") return "root";
+    if ("visiones" in card) return "organizacion";
     if ("metas" in card) return "vision";
     if ("visionId" in card && "objetivos" in card) return "meta";
     if ("metaId" in card && "misiones" in card) return "objetivo";
@@ -59,6 +80,8 @@ export function useCampamentoCRUD({ onRefresh }: UseCampamentoCRUDProps) {
    * Determina el tipo de hijo que puede crear una tarjeta
    */
   const getChildType = (card: CampamentoCardType): ItemType => {
+    if ("type" in card && card.type === "root") return "organizacion";
+    if ("visiones" in card) return "vision";
     if ("metas" in card) return "meta";
     if ("visionId" in card && "objetivos" in card) return "objetivo";
     if ("metaId" in card && "misiones" in card) return "mision";
@@ -72,14 +95,29 @@ export function useCampamentoCRUD({ onRefresh }: UseCampamentoCRUDProps) {
   const createItem = async (
     parentCard: CampamentoCardType,
     data: { titulo: string; descripcion: string }
-  ): Promise<Vision | Meta | Objetivo | Mision | Tarea> => {
+  ): Promise<Organizacion | Vision | Meta | Objetivo | Mision | Tarea> => {
     setLoading(true);
     setError(null);
 
     try {
-      let result: Vision | Meta | Objetivo | Mision | Tarea;
+      let result: Organizacion | Vision | Meta | Objetivo | Mision | Tarea;
 
-      if ("metas" in parentCard) {
+      if ("type" in parentCard && parentCard.type === "root") {
+        // Crear Organización desde el nodo raíz
+        const organizacionData: CreateOrganizacionDTO = {
+          nombre: data.titulo,
+          descripcion: data.descripcion,
+        };
+        result = await createOrganizacion(organizacionData);
+      } else if ("visiones" in parentCard) {
+        // Crear Visión en una organización
+        const visionData: CreateVisionDTO = {
+          titulo: data.titulo,
+          descripcion: data.descripcion,
+          organizacionId: parentCard.id,
+        };
+        result = await createVision(visionData);
+      } else if ("metas" in parentCard) {
         // Crear Meta
         const metaData: CreateMetaDTO = {
           titulo: data.titulo,
@@ -115,14 +153,20 @@ export function useCampamentoCRUD({ onRefresh }: UseCampamentoCRUDProps) {
         throw new Error("Tipo de tarjeta no válido para crear hijo");
       }
 
-      // Refrescar la jerarquía completa
-      await onRefresh();
+      // Actualizar el estado local inmediatamente con el nuevo elemento
+      // Si es el nodo raíz, parentId es null
+      const parentId = "type" in parentCard && parentCard.type === "root"
+        ? null
+        : parentCard.id;
+      addItemToHierarchy(parentId, result);
 
       return result;
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error al crear elemento";
       setError(errorMessage);
+      // En caso de error, refrescar para asegurar consistencia
+      await onRefresh();
       throw err;
     } finally {
       setLoading(false);
@@ -135,14 +179,22 @@ export function useCampamentoCRUD({ onRefresh }: UseCampamentoCRUDProps) {
   const updateItem = async (
     card: CampamentoCardType,
     data: { titulo: string; descripcion: string }
-  ): Promise<Vision | Meta | Objetivo | Mision | Tarea> => {
+  ): Promise<Organizacion | Vision | Meta | Objetivo | Mision | Tarea> => {
     setLoading(true);
     setError(null);
 
     try {
-      let result: Vision | Meta | Objetivo | Mision | Tarea;
+      let result: Organizacion | Vision | Meta | Objetivo | Mision | Tarea;
 
-      if ("metas" in card) {
+      if ("visiones" in card) {
+        // Actualizar Organización
+        const organizacionData: UpdateOrganizacionDTO = {
+          id: card.id,
+          nombre: data.titulo,
+          descripcion: data.descripcion,
+        };
+        result = await updateOrganizacion(organizacionData);
+      } else if ("metas" in card) {
         // Actualizar Visión
         const visionData: UpdateVisionDTO = {
           id: card.id,
@@ -156,6 +208,7 @@ export function useCampamentoCRUD({ onRefresh }: UseCampamentoCRUDProps) {
           id: card.id,
           titulo: data.titulo,
           descripcion: data.descripcion,
+          visionId: card.visionId, // Incluir visionId requerido por el backend
         };
         result = await updateMeta(metaData);
       } else if ("metaId" in card && "misiones" in card) {
@@ -164,6 +217,7 @@ export function useCampamentoCRUD({ onRefresh }: UseCampamentoCRUDProps) {
           id: card.id,
           titulo: data.titulo,
           descripcion: data.descripcion,
+          metaId: card.metaId, // Incluir metaId requerido por el backend
         };
         result = await updateObjetivo(objetivoData);
       } else if ("objetivoId" in card && "tareas" in card) {
@@ -172,6 +226,7 @@ export function useCampamentoCRUD({ onRefresh }: UseCampamentoCRUDProps) {
           id: card.id,
           titulo: data.titulo,
           descripcion: data.descripcion,
+          objetivoId: card.objetivoId, // Incluir objetivoId requerido por el backend
         };
         result = await updateMision(misionData);
       } else {
@@ -180,18 +235,21 @@ export function useCampamentoCRUD({ onRefresh }: UseCampamentoCRUDProps) {
           id: card.id,
           titulo: data.titulo,
           descripcion: data.descripcion,
+          misionId: (card as Tarea).misionId, // Incluir misionId requerido por el backend
         };
         result = await updateTarea(tareaData);
       }
 
-      // Refrescar la jerarquía completa
-      await onRefresh();
+      // Actualizar el estado local inmediatamente
+      updateItemInHierarchy(card.id, data);
 
       return result;
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error al actualizar elemento";
       setError(errorMessage);
+      // En caso de error, refrescar para asegurar consistencia
+      await onRefresh();
       throw err;
     } finally {
       setLoading(false);
@@ -206,7 +264,10 @@ export function useCampamentoCRUD({ onRefresh }: UseCampamentoCRUDProps) {
     setError(null);
 
     try {
-      if ("metas" in card) {
+      if ("visiones" in card) {
+        // Eliminar Organización
+        await deleteOrganizacion(card.id);
+      } else if ("metas" in card) {
         // Eliminar Visión
         await deleteVision(card.id);
       } else if ("visionId" in card && "objetivos" in card) {
@@ -223,12 +284,14 @@ export function useCampamentoCRUD({ onRefresh }: UseCampamentoCRUDProps) {
         await deleteTarea(card.id);
       }
 
-      // Refrescar la jerarquía completa
-      await onRefresh();
+      // Actualizar el estado local inmediatamente eliminando el elemento
+      deleteItemFromHierarchy(card.id);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error al eliminar elemento";
       setError(errorMessage);
+      // En caso de error, refrescar para asegurar consistencia
+      await onRefresh();
       throw err;
     } finally {
       setLoading(false);

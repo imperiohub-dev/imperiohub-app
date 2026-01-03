@@ -6,6 +6,7 @@
 export * from "./common.types";
 
 // Entity types
+export * from "./organizacion.types";
 export * from "./vision.types";
 export * from "./meta.types";
 export * from "./objetivo.types";

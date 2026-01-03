@@ -13,4 +13,6 @@ export interface CreateTareaDTO extends BaseCreateDTO {
   misionId: string;
 }
 
-export interface UpdateTareaDTO extends BaseUpdateDTO {}
+export interface UpdateTareaDTO extends BaseUpdateDTO {
+  misionId?: string; // Opcional para no romper código existente
+}

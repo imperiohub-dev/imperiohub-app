@@ -17,7 +17,10 @@ function getApiBaseUrl(): string {
   // Si hay URL en .env (producción), usarla
   if (process.env.EXPO_PUBLIC_API_URL) {
     // En Android, reemplazar localhost por 10.0.2.2
-    if (Platform.OS === "android" && process.env.EXPO_PUBLIC_API_URL.includes("localhost")) {
+    if (
+      Platform.OS === "android" &&
+      process.env.EXPO_PUBLIC_API_URL.includes("localhost")
+    ) {
       return process.env.EXPO_PUBLIC_API_URL.replace("localhost", "10.0.2.2");
     }
     return process.env.EXPO_PUBLIC_API_URL;
@@ -33,7 +36,7 @@ function getApiBaseUrl(): string {
 export const API_BASE_URL = getApiBaseUrl();
 
 // Log para debugging
-console.log(`[API Config] Platform: ${Platform.OS}, Base URL: ${API_BASE_URL}`);
+// console.log(`[API Config] Platform: ${Platform.OS}, Base URL: ${API_BASE_URL}`);
 
 /**
  * Endpoints de autenticación
@@ -45,6 +48,18 @@ export const AUTH_ENDPOINTS = {
   ME: "/api/auth/me",
   // Endpoint para cerrar sesión
   LOGOUT: "/api/auth/logout",
+} as const;
+
+/**
+ * Endpoints de Organizaciones
+ */
+export const ORGANIZACION_ENDPOINTS = {
+  LIST: "/api/organizaciones",
+  HIERARCHY: "/api/organizaciones/hierarchy",
+  GET: (id: string) => `/api/organizaciones/${id}`,
+  CREATE: "/api/organizaciones",
+  UPDATE: "/api/organizaciones",
+  DELETE: (id: string) => `/api/organizaciones/${id}`,
 } as const;
 
 /**

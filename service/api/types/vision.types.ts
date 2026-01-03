@@ -11,13 +11,18 @@ import type { Tarea } from "./tarea.types";
 
 export interface Vision extends BaseEntity {
   usuarioId: string;
+  organizacionId: string | null; // Relación con Organizacion
   // Relaciones opcionales (cuando se incluyen desde el backend)
   metas?: Meta[];
 }
 
-export interface CreateVisionDTO extends BaseCreateDTO {}
+export interface CreateVisionDTO extends BaseCreateDTO {
+  organizacionId?: string; // Opcional para retrocompatibilidad
+}
 
-export interface UpdateVisionDTO extends BaseUpdateDTO {}
+export interface UpdateVisionDTO extends BaseUpdateDTO {
+  organizacionId?: string;
+}
 
 // ============================================
 // Tipos de Jerarquía Completa (desde el backend)
@@ -48,19 +53,4 @@ export interface MetaHierarchy extends Meta {
 // Jerarquía completa: Vision con toda su descendencia
 export interface VisionHierarchy extends Vision {
   metas: MetaHierarchy[];
-}
-
-// Paginación
-export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  hasMore: boolean;
-}
-
-// Respuesta de jerarquía con paginación
-export interface FindHierarchyResponse {
-  visiones: VisionHierarchy[];
-  pagination: PaginationMeta;
 }

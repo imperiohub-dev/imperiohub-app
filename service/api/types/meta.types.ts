@@ -16,4 +16,6 @@ export interface CreateMetaDTO extends BaseCreateDTO {
   visionId: string;
 }
 
-export interface UpdateMetaDTO extends BaseUpdateDTO {}
+export interface UpdateMetaDTO extends BaseUpdateDTO {
+  visionId?: string; // Opcional para no romper código existente
+}
