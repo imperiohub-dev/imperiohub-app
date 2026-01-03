@@ -9,6 +9,7 @@
 
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { Platform } from "react-native";
+import { router } from "expo-router";
 import { tokenStorage } from "../storage/token.storage";
 import { API_BASE_URL, API_TIMEOUT, COMMON_HEADERS } from "./api.constants";
 
@@ -68,19 +69,29 @@ api.interceptors.response.use(
         });
         break;
       case 401:
-      case 403:
-        // Token inválido, expirado o sin permisos
-        const errorData = error.response?.data as any;
-        console.warn(`${error.response?.status === 401 ? 'Unauthorized' : 'Forbidden'} - ${error.response?.status}`, {
+        // Token inválido o expirado
+        const errorData401 = error.response?.data as any;
+        console.warn('Unauthorized - 401', {
           url: error.config?.url,
-          error: errorData?.error || errorData?.message,
+          error: errorData401?.error || errorData401?.message,
         });
 
         // Limpiar storage de tokens
         await tokenStorage.clear();
 
-        // El AuthContext manejará la redirección al login
-        // cuando detecte que no hay token
+        // Redireccionar a la pantalla de autenticación
+        router.replace('/auth');
+        break;
+      case 403:
+        // Sin permisos
+        const errorData403 = error.response?.data as any;
+        console.warn('Forbidden - 403', {
+          url: error.config?.url,
+          error: errorData403?.error || errorData403?.message,
+        });
+
+        // Limpiar storage de tokens
+        await tokenStorage.clear();
         break;
     }
 
